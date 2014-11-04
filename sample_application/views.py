@@ -1,7 +1,12 @@
-from flask import current_app
+from flask import current_app, Blueprint
 from flask.ext.restful import Resource
 import time
 
+blueprint = Blueprint(
+    'sample_application',
+    __name__,
+    static_folder=None,
+)
 
 class Resources(Resource):
   '''Overview of available resources'''
