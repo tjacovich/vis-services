@@ -17,5 +17,9 @@ def create_app():
   app = Flask(__name__, static_folder=None) 
   app.url_map.strict_slashes = False
   app.config.from_object('sample_application.config')
+  try:
+    app.config.from_object('sample_application.local_config')
+  except ImportError:
+    pass
   app.register_blueprint(blueprint)
   return app
