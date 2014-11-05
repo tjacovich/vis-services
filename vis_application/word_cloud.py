@@ -223,6 +223,8 @@ def get_data_for_wordcloud(q, fq=None, rows=None, start=None):
         'start': start,
         'facets': [], 
         'highlights': [],
+        #fields parameter is necessary for tvrh query
+        'fields': ['id'],
         'defType':'aqp', 
         'tv.tf_idf': 'true', 
         'tv.tf': 'true', 
@@ -230,10 +232,12 @@ def get_data_for_wordcloud(q, fq=None, rows=None, start=None):
         'tf.offsets':'false',
         'tv.fl':'abstract,title',
         'fl':'id,abstract,title',
-        'wt': 'json'
+        'wt': 'json',
+
         
          }
-    response = requests.get(config.SOLR_PATH , params = d)
+    response = requests.get(config.TVRH_SOLR_PATH , params = d)
+    print response.url
     
     if response.status_code == 200:
         results = response.json()

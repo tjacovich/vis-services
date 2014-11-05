@@ -28,7 +28,7 @@ class WordCloud(Resource):
     min_occurences_word = request.args.get("min_occurences_word", None)
 
     word_cloud_json = word_cloud.generate_wordcloud(q = query, fq=fq, rows=rows,start=None, min_percent_word=min_percent_word, min_occurences_word=min_occurences_word)
-    return jsonify(word_cloud_json), 200
+    return word_cloud_json, 200
 
 
 class AuthorNetwork(Resource):

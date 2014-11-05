@@ -301,8 +301,10 @@ def get_data_for_network(q, fq=None, rows=None, start=None):
         
          }
     response = requests.get(config.SOLR_PATH , params = d)
+    print response.url
     if response.status_code == 200:
-        results = response.json()
+        results = response
+        print results
         return results
     else:
         return None
