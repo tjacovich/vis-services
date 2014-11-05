@@ -1,12 +1,14 @@
 from flask import current_app, Blueprint, jsonify, request
 from flask.ext.restful import Resource
+import requests
 from lib import word_cloud
 from lib import author_network
+import config
 
 blueprint = Blueprint(
-    'visualization',
-    __name__,
-    static_folder=None,
+	'visualization',
+	__name__,
+	static_folder=None,
 )
 
 
@@ -17,30 +19,68 @@ class WordCloud(Resource):
 
   def get(self):
 
-    try:
-      query = request.args["q"]
-    except KeyError:
-      return {'Error' : 'No query parameter was provided'}, 400
+	try:
+	  q = request.args["q"]
+	except KeyError:
+	  return {'Error' : 'No query parameter was provided'}, 400
 
-    fq = request.args.get("fq", None)
-    rows = request.args.get("rows", None)
-    if rows:
-      rows = int(rows)
-    start = request.args.get("start", None)
-    if start:
-      start = int(start)
-    min_percent_word = request.args.get("min_percent_word", None)
-    if min_percent_word:
-      min_percent_word = int(min_percent_word)
-    min_occurences_word = request.args.get("min_occurrences_word", None)
-    if min_occurences_word:
-      min_occurences_word = int(min_occurences_word)
+	fq = request.args.get("fq", None)
 
-    print "min", request.args.get("min_occurences_word", None)
+	rows = request.args.get("rows", None)
+	if rows:
+	  rows = int(rows)
+	if not rows or rows > config.MAX_RECORDS:
+		rows = config.MAX_RECORDS
 
+	start = request.args.get("start", None)
+	if start:
+	  start = int(start)
+	if not start:
+		start = config.START
 
-    word_cloud_json = word_cloud.generate_wordcloud(q = query, fq=fq, rows=rows,start=start, min_percent_word=min_percent_word, min_occurences_word=min_occurences_word)
-    return word_cloud_json, 200
+	min_percent_word = request.args.get("min_percent_word", None)
+	if min_percent_word:
+	   min_percent_word = int(min_percent_word)
+	if not min_percent_word:
+	   min_percent_word = config.MIN_PERCENT_WORD
+
+	min_occurences_word = request.args.get("min_occurrences_word", None)
+	if min_occurences_word:
+	  min_occurences_word = int(min_occurences_word)
+	if not min_occurences_word:
+		min_occurences_word = config.MIN_OCCURENCES_WORD
+
+	d = {
+		'q' : q,
+		'fq' : fq,
+		'rows': rows,
+		'start': start,
+		'facets': [], 
+		'highlights': [],
+		#fields parameter is necessary for tvrh query
+		'fields': ['id'],
+		'defType':'aqp', 
+		'tv.tf_idf': 'true', 
+		'tv.tf': 'true', 
+		'tv.positions':'false',
+		'tf.offsets':'false',
+		'tv.fl':'abstract,title',
+		'fl':'id,abstract,title',
+		'wt': 'json',	
+		 }
+
+	response = requests.get(config.TVRH_SOLR_PATH , params = d)
+	
+	if response.status_code == 200:
+		data = response.json()
+	else:
+		return {"Error": "There was a connection error. Please try again later"}, 400
+
+	if data:
+		word_cloud_json = word_cloud.generate_wordcloud(data, min_percent_word=min_percent_word, min_occurences_word=min_occurences_word)
+
+	return word_cloud_json, 200
+
 
 
 class AuthorNetwork(Resource):
@@ -49,24 +89,58 @@ class AuthorNetwork(Resource):
 
   def get(self):
 
-    try:
-      query = request.args["q"]
-    except KeyError:
-      return {'Error' : 'No query parameter was provided'}, 400
+	try:
+		q= request.args["q"]
+	except KeyError:
+		return {'Error' : 'No query parameter was provided'}, 400
 
-    fq = request.args.get("fq", None)
-    rows = request.args.get("rows", None)
-    if rows:
-      rows = int(rows)
-    start = request.args.get("start", None)
-    if start:
-      start = int(start)
-    max_groups = request.args.get("max_groups", None)
-    if max_groups:
-      max_groups = int(max_groups)
+	#assign all query parameters and config variabls
 
-    author_network_json = author_network.generate_network(q = query, fq=fq, rows=rows,start=None, max_groups = max_groups)
-    return author_network_json, 200
+	fq = request.args.get("fq", None)
+
+	rows = request.args.get("rows", None)
+	if rows:
+		rows = int(rows)
+	if not rows or rows > config.MAX_RECORDS:
+		rows = config.MAX_RECORDS
+
+	start = request.args.get("start", None)
+	if start:
+		start = int(start)
+
+	max_groups = request.args.get("max_groups", None)
+	if max_groups:
+		max_groups = int(max_groups)
+	if not max_groups:
+		max_groups = config.MAX_GROUPS
+
+	#request data from solr
+
+	d = {
+		'q' : q,
+		'fq' : fq,
+		'rows': rows,
+		'start': start,
+		'facets': [], 
+		'fl': 'author_norm', 
+		'highlights': [], 
+		'wt' : 'json'
+		}
+
+	response = requests.get(config.SOLR_PATH , params = d)
+	if response.status_code == 200:
+		data = response.json()
+	else:
+		return {"Error": "There was a connection error. Please try again later"}, 400
+
+	if data:
+		#get_network_with_groups expects a list of normalized authors
+		data = [d.get("author_norm", []) for d in data["response"]["docs"]]
+		author_network_json = author_network.get_network_with_groups(data, max_groups)
+
+		return author_network_json, 200
+
+
 
 
 

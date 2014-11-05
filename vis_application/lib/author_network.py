@@ -13,9 +13,6 @@ import community
 import math
 from networkx.readwrite import json_graph
 from collections import defaultdict 
-import requests
-
-import config
 
 
 __all__ = ['generate_network']
@@ -76,7 +73,7 @@ def augment_graph_data(data, max_groups):
     
     if len(data["nodes"]) < 50:
         
-        return {"fullGraph" :data}
+        return {"fullGraph" : data}
     
     total_nodes = len(data['nodes'])   
     connector_nodes = []
@@ -295,47 +292,6 @@ def get_network_with_groups(authors_lists, max_groups):
     return augment_graph_data(authors, max_groups)
 
 
-
-def get_data_for_network(q, fq=None, rows=None, start=None):
-
-    d = {
-        'q' : q,
-        'fq' : fq,
-        'rows': rows,
-        'start': start,
-        'facets': [], 
-        'fl': 'author_norm', 
-        'highlights': [], 
-        'wt' : 'json'
-        
-         }
-    response = requests.get(config.SOLR_PATH , params = d)
-    if response.status_code == 200:
-        results = response.json()
-        return results
-    else:
-        return None
-
-
-def generate_network(q,fq=None,rows=None,start=None, max_groups=None):
-
-
-    if (not rows) or (rows > config.MAX_RECORDS):
-        rows = config.MAX_RECORDS
-    if not start:
-        start = config.START
-    if not max_groups:
-        max_groups = config.MAX_GROUPS
-
-    data = get_data_for_network(q, fq, rows, start)
-
-    if data:
-        #get_network_with_groups expects a list of normalized authors
-        data = [d.get("author_norm", []) for d in data["response"]["docs"]]
-        # print get_network_with_groups(data, max_groups)
-        return get_network_with_groups(data, max_groups)
-    else:
-        return None
         
 
 

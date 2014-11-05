@@ -3,10 +3,6 @@ from __future__ import division
 from stemming.porter2 import stem
 import json
 import re
-import requests
-
-
-import config
 
 
 all = ['generate_wordcloud_dict']
@@ -155,7 +151,7 @@ def build_dict(tf_idf_info, text_info):
     return token_freq_dict, acr_freq_dict
 
 
-def wc_json(solr_json, min_percent_word, min_occurences_word):
+def generate_wordcloud(solr_json, min_percent_word, min_occurences_word):
     """
     This is the main word cloud creation function.
     It takes raw solr json with tf/idf info and returns a json object that has both term
@@ -212,55 +208,4 @@ def wc_json(solr_json, min_percent_word, min_occurences_word):
     token_freq_dict = cleanse_dict(token_freq_dict)
          
     return token_freq_dict
-
-
-def get_data_for_wordcloud(q, fq=None, rows=None, start=None):
-
-    d = {
-        'q' : q,
-        'fq' : fq,
-        'rows': rows,
-        'start': start,
-        'facets': [], 
-        'highlights': [],
-        #fields parameter is necessary for tvrh query
-        'fields': ['id'],
-        'defType':'aqp', 
-        'tv.tf_idf': 'true', 
-        'tv.tf': 'true', 
-        'tv.positions':'false',
-        'tf.offsets':'false',
-        'tv.fl':'abstract,title',
-        'fl':'id,abstract,title',
-        'wt': 'json',
-
-        
-         }
-    response = requests.get(config.TVRH_SOLR_PATH , params = d)
-    
-    if response.status_code == 200:
-        results = response.json()
-        return results
-    else:
-        return None
-
-
-def generate_wordcloud(q,fq=None,rows=None,start=None, min_percent_word=None, min_occurences_word=None):
-
-
-    if not rows or rows > config.MAX_RECORDS:
-        rows = config.MAX_RECORDS
-    if not start:
-        start = config.START
-    if not min_percent_word:
-        min_percent_word = config.MIN_PERCENT_WORD
-    if not min_occurences_word:
-        min_occurences_word = config.MIN_OCCURENCES_WORD
-
-    data = get_data_for_wordcloud(q, fq, rows, start)
-    
-    if data:
-        return wc_json(data, min_percent_word=min_percent_word, min_occurences_word = min_occurences_word)
-    
-
 
