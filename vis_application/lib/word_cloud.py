@@ -248,6 +248,8 @@ def get_data_for_wordcloud(q, fq=None, rows=None, start=None):
 
 def generate_wordcloud(q,fq=None,rows=None,start=None, min_percent_word=None, min_occurences_word=None):
 
+    print "Config variables", min_percent_word, min_occurences_word
+
     if not rows or rows > config.MAX_RECORDS:
         rows = config.MAX_RECORDS
     if not start:
@@ -259,7 +261,7 @@ def generate_wordcloud(q,fq=None,rows=None,start=None, min_percent_word=None, mi
 
     data = get_data_for_wordcloud(q, fq, rows, start)
     if data:
-        return wc_json(data, min_percent_word=min_percent_word, min_occurences_word = min_percent_word)
+        return wc_json(data, min_percent_word=min_percent_word, min_occurences_word = min_occurences_word)
     
 
 

@@ -322,14 +322,24 @@ def get_data_for_network(q, fq=None, rows=None, start=None):
 
 def generate_network(q,fq=None,rows=None,start=None, max_groups=None):
 
-    print "rows", rows
+    print "before", rows, config.MAX_RECORDS
 
-    if not rows or rows > config.MAX_RECORDS:
+    if not rows:
+        print "no rows"
+    if rows > config.MAX_RECORDS:
+        print "wtf", rows, config.MAX_RECORDS
+
+
+    if (not rows) or (rows > config.MAX_RECORDS):
         rows = config.MAX_RECORDS
-    if not start:
-        start = config.START
-    if not max_groups:
-        max_groups = config.MAX_GROUPS
+    # if not start:
+    #     start = config.START
+    # if not max_groups:
+    #     max_groups = config.MAX_GROUPS
+
+    print "after", rows
+
+
 
 
     data = get_data_for_network(q, fq, rows, start)
