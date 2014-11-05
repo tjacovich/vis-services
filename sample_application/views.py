@@ -15,10 +15,10 @@ class Resources(Resource):
   def get(self):
     func_list = {}
     for rule in current_app.url_map.iter_rules():
-      func_list[rule.rule] = {'methods':current_app.view_functions[rule.endpoint].methods,
-                              'scopes': current_app.view_functions[rule.endpoint].view_class.scopes,
-                              'description': current_app.view_functions[rule.endpoint].view_class.__doc__,
-                              }
+      methods = current_app.view_functions[rule.endpoint].methods
+      scopes = current_app.view_functions[rule.endpoint].view_class.scopes
+      description = current_app.view_functions[rule.endpoint].view_class.__doc__
+      func_list[rule.rule] = {'methods':methods,'scopes': scopes,'description': description}
     return func_list, 200
 
 class UnixTime(Resource):
@@ -34,9 +34,8 @@ class PrintArg(Resource):
     return {'arg':arg}, 200
 
 class ExampleApiUsage(Resource):
-  '''This resource uses the app.client.session.get() method to access an api that 
-  requires an oauth2 token, such as our own adsws'''
-
+  '''This resource uses the app.client.session.get() method to access an api that requires an oauth2 token, such as our own adsws'''
+  scopes = ['oauth:sample_application:read','oauth:sample_application:logged_in','oauth:api:search'] 
   def get(self):
     r = current_app.client.session.get('http://api.adslabs.org/v1/search')
     try:
