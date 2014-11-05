@@ -2,7 +2,6 @@ import os
 from flask import Blueprint, Flask
 from flask import Flask, g
 from views import blueprint, Resources, UnixTime, PrintArg, ExampleApiUsage
-from middleware import APITokenMiddleware
 from flask.ext.restful import Api
 from client import Client
 
