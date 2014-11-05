@@ -32,6 +32,15 @@ max_num_auth_paper = 15
 
 #Giovanni's helper functions
 
+
+def _get_author_weight(authors_in_paper):
+    """ Method that returns the weight of a single author in a paper"""
+    #I check if there is at least 1 author otherwise the weight is 0
+    if len(authors_in_paper) > 0:
+        return 1./len(authors_in_paper)
+    else:
+        return 0
+
 def _remap_dict_in_range(mydict, newrange=[1, 100]):
     """function that transform a dictionary 
     in another with the values mapped in a defined range"""
@@ -295,16 +304,14 @@ def get_data_for_network(q, fq=None, rows=None, start=None):
         'rows': rows,
         'start': start,
         'facets': [], 
-        'fields': ['author_norm'], 
+        'fl': 'author_norm', 
         'highlights': [], 
         'wt' : 'json'
         
          }
     response = requests.get(config.SOLR_PATH , params = d)
-    print response.url
     if response.status_code == 200:
-        results = response
-        print results
+        results = response.json()
         return results
     else:
         return None
@@ -322,6 +329,9 @@ def generate_network(q,fq=None,rows=None,start=None, max_groups=None):
     data = get_data_for_network(q, fq, rows, start)
 
     if data:
+        #get_network_with_groups expects a list of normalized authors
+        data = [d.get("author_norm", []) for d in data["response"]["docs"]]
+        # print get_network_with_groups(data, max_groups)
         return get_network_with_groups(data, max_groups)
     else:
         return None

@@ -47,7 +47,7 @@ class AuthorNetwork(Resource):
     max_groups = request.args.get("max_groups", None)
 
     author_network_json = author_network.generate_network(q = query, fq=fq, rows=rows,start=None, max_groups = max_groups)
-    return jsonify(author_network_json), 200
+    return author_network_json, 200
 
 
 
