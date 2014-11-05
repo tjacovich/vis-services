@@ -298,8 +298,6 @@ def get_network_with_groups(authors_lists, max_groups):
 
 def get_data_for_network(q, fq=None, rows=None, start=None):
 
-    print "rows", rows
-
     d = {
         'q' : q,
         'fq' : fq,
@@ -313,7 +311,6 @@ def get_data_for_network(q, fq=None, rows=None, start=None):
          }
     response = requests.get(config.SOLR_PATH , params = d)
     if response.status_code == 200:
-        print "URL!!!", response.url
         results = response.json()
         return results
     else:
@@ -322,25 +319,13 @@ def get_data_for_network(q, fq=None, rows=None, start=None):
 
 def generate_network(q,fq=None,rows=None,start=None, max_groups=None):
 
-    print "before", rows, config.MAX_RECORDS
-
-    if not rows:
-        print "no rows"
-    if rows > config.MAX_RECORDS:
-        print "wtf", rows, config.MAX_RECORDS
-
 
     if (not rows) or (rows > config.MAX_RECORDS):
         rows = config.MAX_RECORDS
-    # if not start:
-    #     start = config.START
-    # if not max_groups:
-    #     max_groups = config.MAX_GROUPS
-
-    print "after", rows
-
-
-
+    if not start:
+        start = config.START
+    if not max_groups:
+        max_groups = config.MAX_GROUPS
 
     data = get_data_for_network(q, fq, rows, start)
 

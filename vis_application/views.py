@@ -32,11 +32,14 @@ class WordCloud(Resource):
     min_percent_word = request.args.get("min_percent_word", None)
     if min_percent_word:
       min_percent_word = int(min_percent_word)
-    min_occurences_word = request.args.get("min_occurences_word", None)
+    min_occurences_word = request.args.get("min_occurrences_word", None)
     if min_occurences_word:
       min_occurences_word = int(min_occurences_word)
 
-    word_cloud_json = word_cloud.generate_wordcloud(q = query, fq=fq, rows=rows,start=None, min_percent_word=min_percent_word, min_occurences_word=min_occurences_word)
+    print "min", request.args.get("min_occurences_word", None)
+
+
+    word_cloud_json = word_cloud.generate_wordcloud(q = query, fq=fq, rows=rows,start=start, min_percent_word=min_percent_word, min_occurences_word=min_occurences_word)
     return word_cloud_json, 200
 
 

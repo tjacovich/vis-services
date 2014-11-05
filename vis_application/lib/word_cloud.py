@@ -237,7 +237,6 @@ def get_data_for_wordcloud(q, fq=None, rows=None, start=None):
         
          }
     response = requests.get(config.TVRH_SOLR_PATH , params = d)
-    print response.url
     
     if response.status_code == 200:
         results = response.json()
@@ -248,7 +247,6 @@ def get_data_for_wordcloud(q, fq=None, rows=None, start=None):
 
 def generate_wordcloud(q,fq=None,rows=None,start=None, min_percent_word=None, min_occurences_word=None):
 
-    print "Config variables", min_percent_word, min_occurences_word
 
     if not rows or rows > config.MAX_RECORDS:
         rows = config.MAX_RECORDS
@@ -260,6 +258,7 @@ def generate_wordcloud(q,fq=None,rows=None,start=None, min_percent_word=None, mi
         min_occurences_word = config.MIN_OCCURENCES_WORD
 
     data = get_data_for_wordcloud(q, fq, rows, start)
+    
     if data:
         return wc_json(data, min_percent_word=min_percent_word, min_occurences_word = min_occurences_word)
     
