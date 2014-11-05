@@ -1,13 +1,26 @@
-# adsabs-webservices-blueprint
+# Visualization Endpoints for ADS
 
-A sample Flask application for backend adsabs (micro) web services. 
+### Author Network
 
-### Overview
+This endpoint takes a solr query (q parameter and optionally fq, start, and rows) and returns
+a json structures.
+* If there are fewer than 50 nodes, the json structure is simply a graph of author nodes
+and their linkages. 
+* Otherwise two graphs are returned : a "fullGraph" that has all node-link information for the nodes
+that were successfully categorized into groups, and a "summaryGraph"
+that summarizes the graph into groups.
 
-  - `wsgi.py`: WSGI entrypoint for all applications
-  - `sample_application/app.py`:  Application boostrapping code, including defining app-specific routes
-  - `sample_application/config.py`: app.config; Any definitions in `local_config.py` in the same directory will overwrite.
-  - `sample_application/views.py`: flask-restful based views.
-  - `sample_application/client.py`: thin wrapper around requests.session; bound to app at initialization. Useful for applications that require sending e.g. oauth2 tokens to other services
-  - `sample_application/README.md`: Application specific README.md
-  - `sample_application/tests/`: unittests
+You can add a max_groups parameter to limit the number of groups returned -- note this isn't taken into account
+by the algorithm that generates the groups, it just limits the amount of information you will receive back.
+
+
+
+
+### Word Cloud
+
+This endpoint takes a solr query (q parameter and optionally fq, start, and rows) and returns
+a json structures.
+* If there are fewer than 50 nodes, the json structure is simply a graph of author nodes
+and their linkages. 
+* Otherwise two graphs are returned : a "fullGraph" that has all node-link information, and a "summaryGraph"
+that summarizes the graph into groups
