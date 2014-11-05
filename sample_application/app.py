@@ -6,7 +6,7 @@ from flask.ext.restful import Api
 from client import Client
 
 def create_app():
-  api = Api(blueprint)
+  api = Api()
   api.add_resource(Resources, '/resources')
   api.add_resource(UnixTime, '/time')
   api.add_resource(PrintArg,'/print/<string:arg>')
@@ -20,5 +20,6 @@ def create_app():
   except IOError:
     pass
   app.register_blueprint(blueprint)
+  api.init_app(app)
   app.client = Client(app.config['CLIENT'])
   return app
