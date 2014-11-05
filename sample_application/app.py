@@ -14,10 +14,10 @@ def create_app():
 
   app = Flask(__name__, static_folder=None) 
   app.url_map.strict_slashes = False
-  app.config.from_object('sample_application.config')
+  app.config.from_pyfile('config.py')
   try:
-    app.config.from_object('sample_application.local_config')
-  except ImportError:
+    app.config.from_pyfile('local_config.py')
+  except IOError:
     pass
   app.register_blueprint(blueprint)
   app.client = Client(app.config['CLIENT'])
