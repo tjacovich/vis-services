@@ -1,0 +1,33 @@
+SECRET_KEY = 'this should be changed'
+
+SOLR_PATH = 'http://localhost:9000/solr/select/'
+
+TVRH_SOLR_PATH = 'http://localhost:9000/solr/tvrh/'
+
+#This section configures this application to act as a client, for example to query solr via adsws
+CLIENT = {
+  'TOKEN': 'we will provide an api key token for this application'
+}
+
+
+
+#word cloud config
+
+MAX_RECORDS = 500
+START = 0
+
+MIN_PERCENT_WORD = 0.03
+MIN_OCCURENCES_WORD = 2
+
+
+
+
+#author network config
+
+MAX_RECORDS = 1000
+START = 0
+
+#configuration for augmented graph data
+MAX_GROUPS = 8
+
+
