@@ -6,15 +6,15 @@ from flask.ext.restful import Api
 from client import Client
 
 def create_app():
-  api = Api(blueprint)
+  api = Api()
   api.add_resource(WordCloud, '/word-cloud')
   api.add_resource(AuthorNetwork, '/author-network')
 
   app = Flask(__name__, static_folder=None) 
   app.url_map.strict_slashes = False
-  app.config.from_pyfile('config')
+  app.config.from_pyfile('config.py')
   try:
-    app.config.from_pyfile('local_config')
+    app.config.from_pyfile('local_config.py')
   except IOError:
     pass
   app.register_blueprint(blueprint)
