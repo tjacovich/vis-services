@@ -4,8 +4,11 @@ from flask import Flask, g
 from views import blueprint, WordCloud, AuthorNetwork
 from flask.ext.restful import Api
 from client import Client
+<<<<<<< HEAD
 
 
+=======
+>>>>>>> added tests but they dont work yet because of an unsolved error
 
 def create_app():
   api = Api(blueprint)

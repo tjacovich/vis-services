@@ -1,6 +1,5 @@
 from flask import current_app, Blueprint, jsonify, request
 from flask.ext.restful import Resource
-import requests
 from lib import word_cloud
 from lib import author_network
 import config
@@ -11,6 +10,12 @@ blueprint = Blueprint(
 	static_folder=None,
 )
 
+#function to help passing flask parameters to solr query
+def ensure_int_variable(val, default):
+	if val:
+		return int(val)
+	else:
+		return default
 
 
 class WordCloud(Resource):
@@ -33,22 +38,13 @@ class WordCloud(Resource):
 		rows = config.MAX_RECORDS
 
 	start = request.args.get("start", None)
-	if start:
-	  start = int(start)
-	if not start:
-		start = config.START
+	start = ensure_int_variable(start, config.START)
 
 	min_percent_word = request.args.get("min_percent_word", None)
-	if min_percent_word:
-	   min_percent_word = int(min_percent_word)
-	if not min_percent_word:
-	   min_percent_word = config.MIN_PERCENT_WORD
+	min_percent_word = ensure_int_variable(min_percent_word, config.MIN_PERCENT_WORD)
 
 	min_occurences_word = request.args.get("min_occurrences_word", None)
-	if min_occurences_word:
-	  min_occurences_word = int(min_occurences_word)
-	if not min_occurences_word:
-		min_occurences_word = config.MIN_OCCURENCES_WORD
+	min_occurences_word = ensure_int_variable(min_occurences_word, config.MIN_OCCURENCES_WORD)
 
 	d = {
 		'q' : q,
@@ -69,7 +65,7 @@ class WordCloud(Resource):
 		'wt': 'json',	
 		 }
 
-	response = requests.get(config.TVRH_SOLR_PATH , params = d)
+	response = current_app.client.session.get(config.TVRH_SOLR_PATH , params = d)
 	
 	if response.status_code == 200:
 		data = response.json()
@@ -80,8 +76,6 @@ class WordCloud(Resource):
 		word_cloud_json = word_cloud.generate_wordcloud(data, min_percent_word=min_percent_word, min_occurences_word=min_occurences_word)
 
 	return word_cloud_json, 200
-
-
 
 class AuthorNetwork(Resource):
   '''Returns author network data for a solr query'''
@@ -105,14 +99,11 @@ class AuthorNetwork(Resource):
 		rows = config.MAX_RECORDS
 
 	start = request.args.get("start", None)
-	if start:
-		start = int(start)
+	start = ensure_int_variable(start, config.START)
 
 	max_groups = request.args.get("max_groups", None)
-	if max_groups:
-		max_groups = int(max_groups)
-	if not max_groups:
-		max_groups = config.MAX_GROUPS
+	max_groups = ensure_int_variable(max_groups, config.MAX_GROUPS)
+
 
 	#request data from solr
 
@@ -127,7 +118,7 @@ class AuthorNetwork(Resource):
 		'wt' : 'json'
 		}
 
-	response = requests.get(config.SOLR_PATH , params = d)
+	response = current_app.client.session.get(config.SOLR_PATH , params = d)
 	if response.status_code == 200:
 		data = response.json()
 	else:
