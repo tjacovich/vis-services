@@ -1,0 +1,1 @@
+{"responseHeader": {"status": 0, "QTime": 1, "params": {"q": "^author:accomazzi,a", "start": "0", "wt": "json", "rows": "1000", "fields": "author_norm"}}, "response": {"start": 0, "numFound": 0, "docs": []}}
