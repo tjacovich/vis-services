@@ -114,7 +114,7 @@ def build_dict(tf_idf_info, text_info):
         for token in d:
         #ignore parts of dashed words which have already been cleaned up
         #by add_punc_and_remove_redundancies
-            if d[token]["tf"][0] = 0:
+            if d[token]["tf"][0] <= 0:
                 continue
             if "syn::" in token:
                 continue
@@ -152,7 +152,7 @@ def build_dict(tf_idf_info, text_info):
 
 
 
-def combine_and_process_dicts(token_freq_dict={}, acr_freq_dict={}, num_records=0, min_occurences_word=0, min_percent_word=0):
+def combine_and_process_dicts(token_freq_dict={}, acr_freq_dict={}, num_records=1, min_occurences_word=0, min_percent_word=0):
     '''
     keeping only stuff in token_freq_dict that appears > MIN_PERCENT_WORD and > MIN_OCCURENCES
     creating a new dict with the most common incarnation of the token, and the total # of times

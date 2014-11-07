@@ -10,22 +10,22 @@ import config
 
 #input data
 
-input_js_word_cloud = json.load(open("vis_blueprint/tests/test_input/word_cloud_input.json"))
 
+input_js_word_cloud = json.load(open(PROJECT_HOME + "/tests/test_input/word_cloud_input.json"))
 
 #has more than 50 nodes
-input_js_author_network = json.load(open("vis_blueprint/tests/test_input/author_network_input.json"))
+input_js_author_network = json.load(open(PROJECT_HOME + "/tests/test_input/author_network_input.json"))
 
 # has fewer than 50 nodes
-input_js_author_network_small = json.load(open("vis_blueprint/tests/test_input/author_network_before_groups_func_small.json"))
+input_js_author_network_small = json.load(open(PROJECT_HOME + "/tests/test_input/author_network_before_groups_func_small.json"))
 
 #result data
 
-test_js_word_cloud = json.load(open("vis_blueprint/tests/test_data/test_output/word_cloud_accomazzi,a.json"))
-test_json_word_cloud_min_occurences = json.load(open("vis_blueprint/tests/test_output/test_data/word_cloud_accomazzi,a_min_occurrence_word_5.json"))
+test_js_word_cloud = open(PROJECT_HOME + "/tests/test_output/word_cloud_accomazzi,a.json")
+test_json_word_cloud_min_occurences = open(PROJECT_HOME + "/tests/test_output/word_cloud_accomazzi,a_min_occurrence_word_5.json")
 
-test_js_author_network = json.load(open("vis_blueprint/tests/test_output/author_network_accomazzi,a.json"))
-test_js_author_network_max_groups = json.load(open("vis_blueprint/tests/test_output/author_network_accomazzi,a_max_groups_3.json"))
+test_js_author_network = open(PROJECT_HOME + "/tests/test_output/author_network_accomazzi,a.json")
+test_js_author_network_max_groups = open(PROJECT_HOME + "/tests/test_output/author_network_accomazzi,a_max_groups_3.json")
 
 
 class TestEndpointLogic(unittest.TestCase):
@@ -39,11 +39,11 @@ class TestEndpointLogic(unittest.TestCase):
 
     tf_idf_dict = {'word':{'tf' :[3], 'tf-idf' : [0.5]}, 'dashed' : {'tf' :[1], 'tf-idf' : [0.5]}, 'slashed' : {'tf' :[1], 'tf-idf' : [0.5]}, 'dashedword' : {'tf' :[1], 'tf-idf' : [0.5]}, 'slashedword' : {'tf' :[1], 'tf-idf' : [0.5]}}
 
-    text_list = ['word', 'dashed-word', 'slashed-word']
+    text_list = ['word', 'dashed-word', 'slashed/word']
 
     updated_info_dict = word_cloud.add_punc_and_remove_redundancies(tf_idf_dict, text_list)
 
-    expected_outcome_info_dict = {'word':{'tf' :[1], 'tf-idf' : [0.5]}, 'dashed-word': {'tf' :[1], 'tf-idf' : [0.5]}, 'slashed/word' : {'tf' :[1], 'tf-idf' : [0.5]}, 'dashed' : {'tf' :[0], 'tf-idf' : [0.5]}, 'slashed' : {'tf' :[0], 'tf-idf' : [0.5]}, 'dashedword' : {'tf' :[0], 'tf-idf' : [0.5]}, 'slashedword' : {'tf' :[0], 'tf-idf' : [0.5]}}
+    expected_outcome_info_dict = {'word':{'tf' :[1], 'tf-idf' : [0.5]}, 'dashed-word': {'tf' :[1], 'tf-idf' : [0.5]}, 'slashed/word' : {'tf' :[1], 'tf-idf' : [0.5]}, 'dashed' : {'tf' :[-1], 'tf-idf' : [0.5]}, 'slashed' : {'tf' :[0], 'tf-idf' : [0.5]}}
 
     self.assertEqual(updated_info_dict, expected_outcome_info_dict)
 
@@ -116,7 +116,7 @@ class TestEndpointLogic(unittest.TestCase):
 
     expected_combined_dict = {
     'dashed-word': {'idf': 0.5, 'total_occurences' :1},
-    'researcher' : {'idf': 0.5, 'total_occurences' :2},
+    'research' : {'idf': 0.5, 'total_occurences' :2},
     'slashed/word':{'idf': 0.5, 'total_occurences' :1},
     'word': {'idf': 0.5, 'total_occurences' :1},
     'FAKE' : {'idf': 0.5, 'total_occurences' :1}
@@ -144,13 +144,13 @@ class TestEndpointLogic(unittest.TestCase):
 
     #if it receives fewer than 50 nodes, it should just return the graph in the form {fullgraph : graph}
 
-    processed_data = word_cloud.generate_wordcloud(input_js_author_network_small, max_groups=max_groups)
+    processed_data = author_network.augment_graph_data(input_js_author_network_small, max_groups=max_groups)
 
     self.assertRaises(KeyError, processed_data["summaryGraph"])
 
     #otherwise, it should return two graphs, the fullgraph and the group node graph. 
 
-    processed_data = word_cloud.generate_wordcloud(input_js_author_network, max_groups=max_groups)
+    processed_data = author_network.augment_graph_data(input_js_author_network, max_groups=max_groups)
 
     self.assertTrue("summaryGraph" in processed_data)
     self.assertTrue("fullGraph" in processed_data)
@@ -170,10 +170,10 @@ class TestEndpointLogic(unittest.TestCase):
 
     #testing entire function
 
-    processed_data = author_network.get_network_with_groups(input_js_author_network, max_groups = 8)
+    processed_data = json.dumps(author_network.augment_graph_data(input_js_author_network, max_groups = 8), sort_keys=True)
     self.assertEqual(processed_data, test_js_author_network)
 
-    processed_data = author_network.get_network_with_groups(input_js_author_network, max_groups =  3)
+    processed_data = json.dumps(author_network.augment_graph_data(input_js_author_network, max_groups =  3), sort_keys=True)
     self.assertEqual(processed_data, test_js_author_network_max_groups)
 
 

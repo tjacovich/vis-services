@@ -153,6 +153,7 @@ def augment_graph_data(data, max_groups):
 
 def get_network_with_groups(authors_lists, max_groups):
     """Function that builds the authors network"""
+
         
     weight_single_authors = {}
     weight_authors_couples = {}
