@@ -1,8 +1,9 @@
 from flask import current_app, Blueprint, jsonify, request
-from flask.ext.restful import Resource
+from flask.ext.restful import Resource, reqparse
 from lib import word_cloud
 from lib import author_network
 import config
+
 
 blueprint = Blueprint(
 	'visualization',
@@ -24,27 +25,34 @@ class WordCloud(Resource):
 
   def get(self):
 
-	try:
-	  q = request.args["q"]
-	except KeyError:
-	  return {'Error' : 'No query parameter was provided'}, 400
+  	parser = reqparse.RequestParser()
+	parser.add_argument('q', type=str, required=True)
+	parser.add_argument('fq', type=str)
+	parser.add_argument('start', type=int)
+	parser.add_argument('rows', type=int)
+	parser.add_argument('min_percent_word', type=int)
+	parser.add_argument('min_occurences_word', type=int)
+	args = parser.parse_args()
 
-	fq = request.args.get("fq", None)
 
-	rows = request.args.get("rows", None)
-	if rows:
-	  rows = int(rows)
+
+	fq = args.get("fq", None)
+
+	rows = args.get("rows", None)
 	if not rows or rows > config.MAX_RECORDS:
 		rows = config.MAX_RECORDS
 
-	start = request.args.get("start", None)
-	start = ensure_int_variable(start, config.START)
+	start = args.get("start", None)
+	if not start:
+		start = config.START
 
-	min_percent_word = request.args.get("min_percent_word", None)
-	min_percent_word = ensure_int_variable(min_percent_word, config.MIN_PERCENT_WORD)
+	min_percent_word = args.get("min_percent_word", None)
+	if not min_percent_word:
+		min_percent_word = config.MIN_PERCENT_WORD
 
-	min_occurences_word = request.args.get("min_occurrences_word", None)
-	min_occurences_word = ensure_int_variable(min_occurences_word, config.MIN_OCCURENCES_WORD)
+	min_occurences_word = args.get("min_occurrences_word", None)
+	if not min_occurrences_word:
+		min_occurences_word = config.MIN_OCCURENCES_WORD
 
 	d = {
 		'q' : q,
@@ -70,7 +78,7 @@ class WordCloud(Resource):
 	if response.status_code == 200:
 		data = response.json()
 	else:
-		return {"Error": "There was a connection error. Please try again later"}, 400
+		return {"Error": "There was a connection error. Please try again later"}, response.status_code
 
 	if data:
 		word_cloud_json = word_cloud.generate_wordcloud(data, min_percent_word=min_percent_word, min_occurences_word=min_occurences_word)
@@ -83,27 +91,29 @@ class AuthorNetwork(Resource):
 
   def get(self):
 
-	try:
-		q= request.args["q"]
-	except KeyError:
-		return {'Error' : 'No query parameter was provided'}, 400
+  	parser = reqparse.RequestParser()
+	parser.add_argument('q', type=str, required=True)
+	parser.add_argument('fq', type=str)
+	parser.add_argument('start', type=int)
+	parser.add_argument('rows', type=int)
+	parser.add_argument('max_groups', type=int)
+	args = parser.parse_args()
 
 	#assign all query parameters and config variabls
 
-	fq = request.args.get("fq", None)
+	fq = args.get("fq", None)
 
-	rows = request.args.get("rows", None)
-	if rows:
-		rows = int(rows)
+	rows = args.get("rows", None)
 	if not rows or rows > config.MAX_RECORDS:
 		rows = config.MAX_RECORDS
 
-	start = request.args.get("start", None)
-	start = ensure_int_variable(start, config.START)
+	start = args.get("start", None)
+	if not start:
+		start = config.START
 
-	max_groups = request.args.get("max_groups", None)
-	max_groups = ensure_int_variable(max_groups, config.MAX_GROUPS)
-
+	max_groups = args.get("max_groups", None)
+	if not max_groups:
+		max_groups = config.MAX_GROUPS
 
 	#request data from solr
 
@@ -122,7 +132,7 @@ class AuthorNetwork(Resource):
 	if response.status_code == 200:
 		data = response.json()
 	else:
-		return {"Error": "There was a connection error. Please try again later"}, 400
+		return {"Error": "There was a connection error. Please try again later"}, response.status_code
 
 	if data:
 		#get_network_with_groups expects a list of normalized authors

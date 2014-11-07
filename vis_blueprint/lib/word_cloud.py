@@ -5,7 +5,7 @@ import json
 import re
 
 
-all = ['generate_wordcloud_dict']
+all = ['generate_wordcloud']
 
 
 # sometimes you find words like "star - boundaries" in the text
@@ -30,7 +30,7 @@ def list_to_dict(l):
     return d
 
 
-def add_punc_and_remove_redundancies(info_dict, text_dict):
+def add_punc_and_remove_redundancies(info_dict, text_list):
     
     '''
     takes care of the dashed word problem -- removes concatenated dashed words
@@ -40,7 +40,7 @@ def add_punc_and_remove_redundancies(info_dict, text_dict):
     punc_list = ["-", "/"]
     for p in punc_list:            
         word_collection = []
-        for t in text_dict:
+        for t in text_list:
             if p in t and t[len(t)-1]!= p and t[0] != p:
                 word_collection.append(t)
 
@@ -151,7 +151,7 @@ def build_dict(tf_idf_info, text_info):
     return token_freq_dict, acr_freq_dict
 
 
-def generate_wordcloud(solr_json, min_percent_word, min_occurences_word):
+def generate_wordcloud(solr_json, min_percent_word=0, min_occurences_word=0):
     """
     This is the main word cloud creation function.
     It takes raw solr json with tf/idf info and returns a json object that has both term
