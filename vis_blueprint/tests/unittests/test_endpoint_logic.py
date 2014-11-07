@@ -19,8 +19,6 @@ input_js_author_network = json.load(open("vis_blueprint/tests/test_input/author_
 # has fewer than 50 nodes
 input_js_author_network_small = json.load(open("vis_blueprint/tests/test_input/author_network_before_groups_func_small.json"))
 
-
-
 #result data
 
 test_js_word_cloud = json.load(open("vis_blueprint/tests/test_data/test_output/word_cloud_accomazzi,a.json"))
@@ -34,9 +32,10 @@ class TestEndpointLogic(unittest.TestCase):
 
   def test_word_cloud_resource(self):
 
-    # add_punc_and_remove_redundancies uses the text returned from solr to 
-    # do some cleaning up of the idf info returned by solr, after this point
-    # the solr text is ignored, only the tf/idf data is used
+    # add_punc_and_remove_redundancies 
+    #uses the text returned from solr to do some cleaning up of the idf info returned by solr,
+    # reducing counts of token components of slashed or dashed words
+    # after this point the solr text is ignored, only the tf/idf data is used
 
     tf_idf_dict = {'word':{'tf' :[3], 'tf-idf' : [0.5]}, 'dashed' : {'tf' :[1], 'tf-idf' : [0.5]}, 'slashed' : {'tf' :[1], 'tf-idf' : [0.5]}, 'dashedword' : {'tf' :[1], 'tf-idf' : [0.5]}, 'slashedword' : {'tf' :[1], 'tf-idf' : [0.5]}}
 
@@ -44,15 +43,89 @@ class TestEndpointLogic(unittest.TestCase):
 
     updated_info_dict = word_cloud.add_punc_and_remove_redundancies(tf_idf_dict, text_list)
 
-    expected_outcome_info_dict = {'word':{'tf' :[1], 'tf-idf' : [0.5]}, 'dashed-word': {'tf' :[1], 'tf-idf' : [0.5]}, 'slashed-word' : {'tf' :[1], 'tf-idf' : [0.5]}, 'dashed' : {'tf' :[0], 'tf-idf' : [0.5]}, 'slashed' : {'tf' :[0], 'tf-idf' : [0.5]}, 'dashedword' : {'tf' :[0], 'tf-idf' : [0.5]}, 'slashedword' : {'tf' :[0], 'tf-idf' : [0.5]}}
+    expected_outcome_info_dict = {'word':{'tf' :[1], 'tf-idf' : [0.5]}, 'dashed-word': {'tf' :[1], 'tf-idf' : [0.5]}, 'slashed/word' : {'tf' :[1], 'tf-idf' : [0.5]}, 'dashed' : {'tf' :[0], 'tf-idf' : [0.5]}, 'slashed' : {'tf' :[0], 'tf-idf' : [0.5]}, 'dashedword' : {'tf' :[0], 'tf-idf' : [0.5]}, 'slashedword' : {'tf' :[0], 'tf-idf' : [0.5]}}
+
+    self.assertEqual(updated_info_dict, expected_outcome_info_dict)
+
+    # build_dict 
+    # is a parent function to add_punc_and_remove_redundancies that takes an tf idf info and text info
+    # and returns a token and acronym dictionary. The token dictionary is grouped by stem and includes
+    # a list of idf for each different word
+
+
+    tf_idf_dict = {
+        'fakeId': {
+            'abstract': {
+                'word': {
+                    'tf': [3],
+                    'tf-idf': [0.5]
+                },
+                'dashed': {
+                    'tf': [1],
+                    'tf-idf': [0.5]
+                },
+                'slashed': {
+                    'tf': [1],
+                    'tf-idf': [0.5]
+                },
+                'dashedword': {
+                    'tf': [1],
+                    'tf-idf': [0.5]
+                },
+                'slashedword': {
+                    'tf': [1],
+                    'tf-idf': [0.5]
+                }
+            },
+            'title': {
+                'research': {
+                    'tf': [1],
+                    'tf-idf': [0.1]
+                },
+                'researcher': {
+                    'tf': [1],
+                    'tf-idf': [0.9]
+                },
+                'acr::fake': {
+                    'tf': [1],
+                    'tf-idf': [0.5]
+                }
+            }
+        }
+    }
+
+    text_list = [{'id': 'fakeId', 'abstract': 'word dashed-word slashed/word', 'title' : 'research researcher FAKE'}]
+
+    
+    expected_outcome_info_dict = ({'dashedword': {'idf': [0.5], 'tokens': {'dashed-word': 1}},
+    'research': {'idf': [0.9, 0.1], 'tokens': {'research': 1, 'researcher': 1}},
+    'slashedword': {'idf': [0.5], 'tokens': {'slashed/word': 1}},
+    'word': {'idf': [0.5], 'tokens': {'word': 1}}},
+    {'FAKE': {'idf': 0.5, 'total_occurences': 1}})
+
+
+    updated_info_dict = word_cloud.build_dict(tf_idf_dict, text_list)
 
     self.assertEqual(updated_info_dict, expected_outcome_info_dict)
 
 
+    #combine_and_process_dicts
+    #uses the expected outcome from the previous function
 
-    # build_dict is a parent function to add_punc_and_remove_redundancies that takes an tf idf info and text info
-    # and returns a token and acronym dictionary
-    # the token dictionary is grouped by stem and includes a list of idf for each different word
+    combined_dict = word_cloud.combine_and_process_dicts(expected_outcome_info_dict[0], expected_outcome_info_dict[1])
+
+    expected_combined_dict = {
+    'dashed-word': {'idf': 0.5, 'total_occurences' :1},
+    'researcher' : {'idf': 0.5, 'total_occurences' :2},
+    'slashed/word':{'idf': 0.5, 'total_occurences' :1},
+    'word': {'idf': 0.5, 'total_occurences' :1},
+    'FAKE' : {'idf': 0.5, 'total_occurences' :1}
+    }
+
+    self.assertEqual(combined_dict, expected_combined_dict)
+
+
+    #testing the main word cloud generation function with large data
 
     processed_data = word_cloud.generate_wordcloud(input_js_word_cloud, min_occurences_word=2, min_percent_word=0.03)
     self.assertEqual(processed_data, test_js_word_cloud)

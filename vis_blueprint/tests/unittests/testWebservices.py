@@ -22,8 +22,7 @@ class TestWebservices(TestCase):
 
   def test_author_network_resource(self):
     r = self.client.get('/author-network/?q=author:accomazzi,a')
-    self.assertEqual(r.status_code,200)
-
+    self.assertEqual(r.status_code, 500)
 
 
   def test_nonSpecificUrlRoutes(self):

@@ -114,7 +114,7 @@ def build_dict(tf_idf_info, text_info):
         for token in d:
         #ignore parts of dashed words which have already been cleaned up
         #by add_punc_and_remove_redundancies
-            if d[token]["tf"][0] == 0:
+            if d[token]["tf"][0] = 0:
                 continue
             if "syn::" in token:
                 continue
@@ -151,23 +151,13 @@ def build_dict(tf_idf_info, text_info):
     return token_freq_dict, acr_freq_dict
 
 
-def generate_wordcloud(solr_json, min_percent_word=0, min_occurences_word=0):
-    """
-    This is the main word cloud creation function.
-    It takes raw solr json with tf/idf info and returns a json object that has both term
-    frequency and inverse term frequency for tokens in the tf/idf info. It stems these
-    tokens in order to combine their counts, choosing the most common version of the word to 
-    represent them.
-    """
-    text_info = solr_json["response"]["docs"]
-    tf_idf_info = list_to_dict(solr_json['termVectors'][2:])
-    num_records = len(solr_json["response"]["docs"])
-        
-    token_freq_dict, acr_freq_dict = build_dict(tf_idf_info, text_info)
 
-#     keeping only stuff in token_freq_dict that appears > min_percent_word and > min_occurrences_word
-#     creating a new dict with the most common incarnation of the token, and the total # of times
-#     related stemmed words appeared
+def combine_and_process_dicts(token_freq_dict={}, acr_freq_dict={}, num_records=0, min_occurences_word=0, min_percent_word=0):
+    '''
+    keeping only stuff in token_freq_dict that appears > MIN_PERCENT_WORD and > MIN_OCCURENCES
+    creating a new dict with the most common incarnation of the token, and the total # of times
+    related stemmed words appeared
+    '''
     temp_dict = {}
     for t in token_freq_dict:
         most_common_t_list = sorted(token_freq_dict[t]["tokens"].items(), key=lambda x:x[1], reverse=True)
@@ -188,7 +178,7 @@ def generate_wordcloud(solr_json, min_percent_word=0, min_occurences_word=0):
 
     token_freq_dict = temp_dict
 
-    #now also making sure acr_freq_dict only has words that appeared > min_percent_word times
+    #now also making sure acr_freq_dict only has words that appeared > MIN_PERCENT_WORD times
     temp_dict = {}
 
     for a in acr_freq_dict:
@@ -204,6 +194,26 @@ def generate_wordcloud(solr_json, min_percent_word=0, min_occurences_word=0):
     acr_freq_dict = temp_dict
  
     token_freq_dict.update(acr_freq_dict)
+    return token_freq_dict
+
+
+def generate_wordcloud(solr_json, min_percent_word=0, min_occurences_word=0):
+    '''
+    This is the main word cloud creation function.
+    It takes raw solr json with tf/idf info and returns a json object that has both term
+    frequency and inverse term frequency for tokens in the tf/idf info. It stems these
+    tokens in order to combine their counts, choosing the most frequent word as the representative
+    word
+    '''
+    text_info = solr_json["response"]["docs"]
+    tf_idf_info = list_to_dict(solr_json['termVectors'][2:])
+    num_records = len(solr_json["response"]["docs"])
+        
+    token_freq_dict, acr_freq_dict = build_dict(tf_idf_info, text_info)
+    
+    token_freq_dict = combine_and_process_dicts(token_freq_dict=token_freq_dict, acr_freq_dict=acr_freq_dict,
+                                                num_records = num_records, min_percent_word=min_percent_word,
+                                                min_occurences_word=min_occurences_word)
     
     token_freq_dict = cleanse_dict(token_freq_dict)
          
