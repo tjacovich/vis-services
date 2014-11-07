@@ -14,18 +14,18 @@ import config
 input_js_word_cloud = json.load(open(PROJECT_HOME + "/tests/test_input/word_cloud_input.json"))
 
 #has more than 50 nodes
-input_js_author_network = json.load(open(PROJECT_HOME + "/tests/test_input/author_network_input.json"))
+input_js_author_network = json.load(open(PROJECT_HOME + "/tests/test_input/author_network_before_groups_func_large.json"))
 
 # has fewer than 50 nodes
 input_js_author_network_small = json.load(open(PROJECT_HOME + "/tests/test_input/author_network_before_groups_func_small.json"))
 
 #result data
 
-test_js_word_cloud = open(PROJECT_HOME + "/tests/test_output/word_cloud_accomazzi,a.json")
-test_json_word_cloud_min_occurences = open(PROJECT_HOME + "/tests/test_output/word_cloud_accomazzi,a_min_occurrence_word_5.json")
+test_js_word_cloud = open(PROJECT_HOME + "/tests/test_output/word_cloud_accomazzi,a.json").read()
+test_json_word_cloud_min_occurences = open(PROJECT_HOME + "/tests/test_output/word_cloud_accomazzi,a_min_occurrence_word_5.json").read()
 
-test_js_author_network = open(PROJECT_HOME + "/tests/test_output/author_network_accomazzi,a.json")
-test_js_author_network_max_groups = open(PROJECT_HOME + "/tests/test_output/author_network_accomazzi,a_max_groups_3.json")
+test_js_author_network = open(PROJECT_HOME + "/tests/test_output/author_network_accomazzi,a.json").read()
+test_js_author_network_max_groups = open(PROJECT_HOME + "/tests/test_output/author_network_accomazzi,a_max_groups_3.json").read()
 
 
 class TestEndpointLogic(unittest.TestCase):
@@ -146,7 +146,7 @@ class TestEndpointLogic(unittest.TestCase):
 
     processed_data = author_network.augment_graph_data(input_js_author_network_small, max_groups=max_groups)
 
-    self.assertRaises(KeyError, processed_data["summaryGraph"])
+    self.assertNotIn("summaryGraph", processed_data)
 
     #otherwise, it should return two graphs, the fullgraph and the group node graph. 
 
