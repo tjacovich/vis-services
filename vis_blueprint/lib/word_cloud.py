@@ -174,7 +174,7 @@ def combine_and_process_dicts(token_freq_dict={}, acr_freq_dict={}, num_records=
         if num/num_records>= min_percent_word and num >= min_occurences_word:
             #find the average of all idf values
             idf = sum(token_freq_dict[t]["idf"])/len(token_freq_dict[t]["idf"])
-            temp_dict[most_common_t] = {'total_occurences':num, "idf": idf}
+            temp_dict[most_common_t] = {"total_occurences":num, "idf": idf}
 
     token_freq_dict = temp_dict
 

@@ -21,18 +21,18 @@ input_js_author_network_small = json.load(open(PROJECT_HOME + "/tests/test_input
 
 #result data
 
-test_js_word_cloud = open(PROJECT_HOME + "/tests/test_output/word_cloud_accomazzi,a.json").read()
-test_json_word_cloud_min_occurences = open(PROJECT_HOME + "/tests/test_output/word_cloud_accomazzi,a_min_occurrence_word_5.json").read()
+test_js_word_cloud = json.load(open(PROJECT_HOME + "/tests/test_output/word_cloud_accomazzi,a.json"))
+test_json_word_cloud_min_occurences = json.load(open(PROJECT_HOME + "/tests/test_output/word_cloud_accomazzi,a_min_occurrence_word_5.json"))
 
-test_js_author_network = open(PROJECT_HOME + "/tests/test_output/author_network_accomazzi,a.json").read()
-test_js_author_network_max_groups = open(PROJECT_HOME + "/tests/test_output/author_network_accomazzi,a_max_groups_3.json").read()
+test_js_author_network = json.load(open(PROJECT_HOME + "/tests/test_output/author_network_accomazzi,a.json"))
+test_js_author_network_max_groups = json.load(open(PROJECT_HOME + "/tests/test_output/author_network_accomazzi,a_max_groups_3.json"))
 
 
 class TestEndpointLogic(unittest.TestCase):
 
   def test_word_cloud_resource(self):
 
-    # add_punc_and_remove_redundancies 
+    # function: add_punc_and_remove_redundancies 
     #uses the text returned from solr to do some cleaning up of the idf info returned by solr,
     # reducing counts of token components of slashed or dashed words
     # after this point the solr text is ignored, only the tf/idf data is used
@@ -47,7 +47,7 @@ class TestEndpointLogic(unittest.TestCase):
 
     self.assertEqual(updated_info_dict, expected_outcome_info_dict)
 
-    # build_dict 
+    # function: build_dict 
     # is a parent function to add_punc_and_remove_redundancies that takes an tf idf info and text info
     # and returns a token and acronym dictionary. The token dictionary is grouped by stem and includes
     # a list of idf for each different word
@@ -109,7 +109,7 @@ class TestEndpointLogic(unittest.TestCase):
     self.assertEqual(updated_info_dict, expected_outcome_info_dict)
 
 
-    #combine_and_process_dicts
+    #function: combine_and_process_dicts
     #uses the expected outcome from the previous function
 
     combined_dict = word_cloud.combine_and_process_dicts(expected_outcome_info_dict[0], expected_outcome_info_dict[1])
@@ -124,14 +124,15 @@ class TestEndpointLogic(unittest.TestCase):
 
     self.assertEqual(combined_dict, expected_combined_dict)
 
+    self.maxDiff = None
 
-    #testing the main word cloud generation function with large data
+   #testing the main word cloud generation function with large data
 
     processed_data = word_cloud.generate_wordcloud(input_js_word_cloud, min_occurences_word=2, min_percent_word=0.03)
-    self.assertEqual(processed_data, test_js_word_cloud)
+    self.assertEqual(json.loads(json.dumps(processed_data)), test_js_word_cloud)
 
     processed_data = word_cloud.generate_wordcloud(input_js_word_cloud, min_occurences_word=5, min_percent_word=0.03)
-    self.assertEqual(processed_data, test_json_word_cloud_min_occurences)
+    self.assertEqual(json.loads(json.dumps(processed_data)), test_json_word_cloud_min_occurences)
 
 
 
@@ -144,9 +145,9 @@ class TestEndpointLogic(unittest.TestCase):
 
     #if it receives fewer than 50 nodes, it should just return the graph in the form {fullgraph : graph}
 
-    processed_data = author_network.augment_graph_data(input_js_author_network_small, max_groups=max_groups)
+    processed_data_small = author_network.augment_graph_data(input_js_author_network_small, max_groups=max_groups)
 
-    self.assertNotIn("summaryGraph", processed_data)
+    self.assertNotIn("summaryGraph", processed_data_small)
 
     #otherwise, it should return two graphs, the fullgraph and the group node graph. 
 
@@ -155,27 +156,28 @@ class TestEndpointLogic(unittest.TestCase):
     self.assertTrue("summaryGraph" in processed_data)
     self.assertTrue("fullGraph" in processed_data)
 
+
     #The full graph will be filtered of nodes that didn't make it into one of the groups
 
     allowed_groups = sorted([n["id"] for n in test_js_author_network_max_groups["summaryGraph"]["nodes"]])
+    allowed_groups = [a for a in allowed_groups if isinstance(a, int)]
     group_nums =sorted(list(set([n["group"]for n in test_js_author_network_max_groups['fullGraph']['nodes']])))
 
     self.assertEqual(allowed_groups, group_nums)
 
     # And it will have no more than max_groups number of groups
 
-    groups = [d for d in processed_data["summaryGraph"]["nodes"] if not d["connector"]]
+    groups = [d for d in processed_data["summaryGraph"]["nodes"] if not d.get("connector", None)]
 
     self.assertLessEqual(len(groups), max_groups)
 
     #testing entire function
 
-    processed_data = json.dumps(author_network.augment_graph_data(input_js_author_network, max_groups = 8), sort_keys=True)
+    processed_data = author_network.augment_graph_data(input_js_author_network, max_groups=max_groups)
+
+
     self.assertEqual(processed_data, test_js_author_network)
-
-    processed_data = json.dumps(author_network.augment_graph_data(input_js_author_network, max_groups =  3), sort_keys=True)
-    self.assertEqual(processed_data, test_js_author_network_max_groups)
-
+    
 
 
 
