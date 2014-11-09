@@ -152,7 +152,7 @@ def build_dict(tf_idf_info, text_info):
 
 
 
-def combine_and_process_dicts(token_freq_dict={}, acr_freq_dict={}, num_records=1, min_occurences_word=0, min_percent_word=0):
+def combine_and_process_dicts(token_freq_dict, acr_freq_dict, num_records=1, min_occurences_word=0, min_percent_word=0):
     '''
     keeping only stuff in token_freq_dict that appears > MIN_PERCENT_WORD and > MIN_OCCURENCES
     creating a new dict with the most common incarnation of the token, and the total # of times
@@ -171,7 +171,7 @@ def combine_and_process_dicts(token_freq_dict={}, acr_freq_dict={}, num_records=
         else:
             most_common_t = sorted(most_common_t_list, key=lambda x:len(x[0]))[0][0]
         num = sum(token_freq_dict[t]["tokens"].values())
-        if num/num_records>= min_percent_word and num >= min_occurences_word:
+        if num/num_records* 100 >= min_percent_word and num >= min_occurences_word:
             #find the average of all idf values
             idf = sum(token_freq_dict[t]["idf"])/len(token_freq_dict[t]["idf"])
             temp_dict[most_common_t] = {"total_occurences":num, "idf": idf}
@@ -189,7 +189,7 @@ def combine_and_process_dicts(token_freq_dict={}, acr_freq_dict={}, num_records=
             del token_freq_dict[small_a]
         
         total_occurences = acr_freq_dict[a]['total_occurences']
-        if total_occurences/num_records>= min_percent_word and total_occurences >= min_occurences_word:
+        if total_occurences/num_records * 100 >= min_percent_word and total_occurences >= min_occurences_word:
             temp_dict[a]=acr_freq_dict[a]
     acr_freq_dict = temp_dict
  

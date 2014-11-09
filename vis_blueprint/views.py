@@ -11,13 +11,6 @@ blueprint = Blueprint(
 	static_folder=None,
 )
 
-#function to help passing flask parameters to solr query
-def ensure_int_variable(val, default):
-	if val:
-		return int(val)
-	else:
-		return default
-
 
 class WordCloud(Resource):
   '''Returns collated tf/idf data for a solr query'''
@@ -34,7 +27,7 @@ class WordCloud(Resource):
 	parser.add_argument('min_occurences_word', type=int)
 	args = parser.parse_args()
 
-
+	q = args.get("q")
 
 	fq = args.get("fq", None)
 
@@ -50,7 +43,7 @@ class WordCloud(Resource):
 	if not min_percent_word:
 		min_percent_word = config.MIN_PERCENT_WORD
 
-	min_occurences_word = args.get("min_occurrences_word", None)
+	min_occurrences_word = args.get("min_occurrences_word", None)
 	if not min_occurrences_word:
 		min_occurences_word = config.MIN_OCCURENCES_WORD
 
@@ -99,7 +92,9 @@ class AuthorNetwork(Resource):
 	parser.add_argument('max_groups', type=int)
 	args = parser.parse_args()
 
-	#assign all query parameters and config variabls
+	#assign all query parameters and config variables
+
+	q = args.get("q")
 
 	fq = args.get("fq", None)
 
@@ -129,6 +124,7 @@ class AuthorNetwork(Resource):
 		}
 
 	response = current_app.client.session.get(config.SOLR_PATH , params = d)
+
 	if response.status_code == 200:
 		data = response.json()
 	else:

@@ -143,7 +143,7 @@ def augment_graph_data(data, max_groups):
 
 
     final_data = {"summaryGraph" : json_graph.node_link_data(summary_graph), "fullGraph" : json_graph.node_link_data(G) }
-        
+
     
     return final_data
 
@@ -154,7 +154,7 @@ def augment_graph_data(data, max_groups):
 def get_network_with_groups(authors_lists, max_groups):
     """Function that builds the authors network"""
 
-        
+
     weight_single_authors = {}
     weight_authors_couples = {}
     
