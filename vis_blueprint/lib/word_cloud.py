@@ -76,6 +76,9 @@ def cleanse_dict(token_freq_dict):
 #     getting rid of anything that occurs only once
         elif token_freq_dict[t]["idf"] == 1.0:
             del token_freq_dict[t]
+#     getting rid of any artifacts that have freq of 0
+        elif token_freq_dict[t]["total_occurrences"] < 1:
+            del token_freq_dict[t]
             
     return token_freq_dict
 
@@ -90,7 +93,8 @@ def build_dict(tf_idf_info, text_info):
     
     token_freq_dict = {}
     acr_freq_dict= {}
-        
+
+    #iterating through individual records
     for i, _id in enumerate(tf_idf_info):
         all_data = tf_idf_info[_id]
         abstract_info = all_data.get("abstract", {})
@@ -110,7 +114,7 @@ def build_dict(tf_idf_info, text_info):
         abstract_info.update(title_info)
         d = abstract_info         
 
-        # create the dictionaries
+        # create the dictionaries by iterating through tokens
         for token in d:
         #ignore parts of dashed words which have already been cleaned up
         #by add_punc_and_remove_redundancies
@@ -126,35 +130,43 @@ def build_dict(tf_idf_info, text_info):
                     freq_dict[freq_dict.keys()[0]]-=1
                 except KeyError:
                     pass
-                if acr in acr_freq_dict:
-                    acr_freq_dict[acr]['total_occurences']+=1
-                else:
-                    acr_freq_dict[acr]={'total_occurences':1}
-                    acr_freq_dict[acr]['idf'] = d[token]['tf-idf'][0]/d[token]['tf'][0]
 
-#              ADD WORDS longer than 2 letters
+                #if the key doesn't exist, add it
+                if acr not in acr_freq_dict:
+                    acr_freq_dict[acr]={'total_occurrences':0, "record_count" : [], "idf" : [] }
+
+                #add info about total occurrences, record count, and idf
+                acr_freq_dict[acr]['total_occurrences']+=1
+                acr_freq_dict[acr]["record_count"].append(_id)
+
+                idf = d[token]['tf-idf'][0]/d[token]['tf'][0]
+                acr_freq_dict[acr]['idf'].append(idf)
+
+#           ADD WORDS longer than 2 letters
             elif len("".join([t for t in token if t.isalpha()])) > 2:
                 key = stem("".join([t for t in token if t.isalpha()]))
-                if key in token_freq_dict:
-                    key_d =  token_freq_dict[key]["tokens"]
-                    if token in key_d:
-                        key_d[token] =key_d[token] + 1
-                    else:
-                        key_d[token] = 1
-                        idf = d[token]['tf-idf'][0]/d[token]['tf'][0]
-                        token_freq_dict[key]["idf"].append(idf)
-                          
-                else:
-                    idf = d[token]['tf-idf'][0]/d[token]['tf'][0]
-                    token_freq_dict[key] = {"tokens" : {token : 1}, "idf" : [idf] }
-                    
+
+                #add stemmed token to dictionary if the key isn't there already
+                if key not in token_freq_dict:
+                    token_freq_dict[key] = {"tokens" : {}, "idf" : [], "record_count" : []}
+
+                #this records how many individual records a word appears in,
+                token_freq_dict[key]["record_count"].append(_id)
+
+                # add idf and add the token to the tokens dict
+                token_freq_dict[key]["tokens"][token] = token_freq_dict[key]["tokens"].get(token, 0) + 1
+
+                idf = d[token]['tf-idf'][0]/d[token]['tf'][0]
+
+                token_freq_dict[key]["idf"].append(idf)
+     
     return token_freq_dict, acr_freq_dict
 
 
 
-def combine_and_process_dicts(token_freq_dict, acr_freq_dict, num_records=1, min_occurences_word=0, min_percent_word=0):
+def combine_and_process_dicts(token_freq_dict, acr_freq_dict, num_records=1, min_occurrences_word=0, min_percent_word=0):
     '''
-    keeping only stuff in token_freq_dict that appears > MIN_PERCENT_WORD and > MIN_OCCURENCES
+    keeping only stuff in token_freq_dict that appears > MIN_PERCENT_WORD and > MIN_occurrenceS
     creating a new dict with the most common incarnation of the token, and the total # of times
     related stemmed words appeared
     '''
@@ -170,11 +182,28 @@ def combine_and_process_dicts(token_freq_dict, acr_freq_dict, num_records=1, min
         # otherwise, whatever's shortest
         else:
             most_common_t = sorted(most_common_t_list, key=lambda x:len(x[0]))[0][0]
-        num = sum(token_freq_dict[t]["tokens"].values())
-        if num/num_records* 100 >= min_percent_word and num >= min_occurences_word:
+
+        if most_common_t == "ocred":
+            print token_freq_dict[t]
+
+        #how many records did this token appear in?
+        record_count = len(set(token_freq_dict[t]["record_count"]))
+
+        #in total, how often did this token appear?
+        total_occurrences =  sum(token_freq_dict[t]["tokens"].values())
+
+        #if it's negative or 0 (because it was a duplicate of an acronym), just continue
+        if total_occurrences < 1:
+            continue
+
+        if record_count/num_records * 100 >= min_percent_word and total_occurrences >= min_occurrences_word:
+
             #find the average of all idf values
             idf = sum(token_freq_dict[t]["idf"])/len(token_freq_dict[t]["idf"])
-            temp_dict[most_common_t] = {"total_occurences":num, "idf": idf}
+            temp_dict[most_common_t] = {"total_occurrences": total_occurrences, "idf": idf, "record_count" : record_count}
+
+    #storing for acr freq dict below
+    old_token_freq_dict = token_freq_dict
 
     token_freq_dict = temp_dict
 
@@ -184,20 +213,29 @@ def combine_and_process_dicts(token_freq_dict, acr_freq_dict, num_records=1, min
     for a in acr_freq_dict:
 #       adding lower case tokens (this might not always be strictly correct?)
         small_a = a.lower()
-        if len(small_a) < 5 and small_a in token_freq_dict:
-            acr_freq_dict[a]['total_occurences']+=token_freq_dict[small_a]['total_occurences']
+        if small_a in token_freq_dict:
+            acr_freq_dict[a]['total_occurrences']+=token_freq_dict[small_a]['total_occurrences']
+            #adding any extra records to the record count list
+            acr_freq_dict[a]["record_count"].extend(old_token_freq_dict[t]["record_count"])
             del token_freq_dict[small_a]
-        
-        total_occurences = acr_freq_dict[a]['total_occurences']
-        if total_occurences/num_records * 100 >= min_percent_word and total_occurences >= min_occurences_word:
-            temp_dict[a]=acr_freq_dict[a]
+
+        record_count = len(set(acr_freq_dict[a]["record_count"]))
+   
+        total_occurrences = acr_freq_dict[a]['total_occurrences']
+
+        if record_count/num_records * 100 >= min_percent_word and total_occurrences >= min_occurrences_word:
+
+            idf = sum(acr_freq_dict[a]["idf"])/len(acr_freq_dict[a]["idf"])
+            temp_dict[a]={"total_occurrences" : total_occurrences, "idf": idf, "record_count": record_count}
+
     acr_freq_dict = temp_dict
  
     token_freq_dict.update(acr_freq_dict)
+
     return token_freq_dict
 
 
-def generate_wordcloud(solr_json, min_percent_word=0, min_occurences_word=0):
+def generate_wordcloud(solr_json, min_percent_word=0, min_occurrences_word=0):
     '''
     This is the main word cloud creation function.
     It takes raw solr json with tf/idf info and returns a json object that has both term
@@ -213,9 +251,14 @@ def generate_wordcloud(solr_json, min_percent_word=0, min_occurences_word=0):
     
     token_freq_dict = combine_and_process_dicts(token_freq_dict=token_freq_dict, acr_freq_dict=acr_freq_dict,
                                                 num_records = num_records, min_percent_word=min_percent_word,
-                                                min_occurences_word=min_occurences_word)
+                                                min_occurrences_word=min_occurrences_word)
     
     token_freq_dict = cleanse_dict(token_freq_dict)
+
+
+    for t in token_freq_dict:
+        if token_freq_dict[t]["total_occurrences"] < token_freq_dict[t]["record_count"]:
+            print "hey!!!", t, token_freq_dict[t]
          
     return token_freq_dict
 

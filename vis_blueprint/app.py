@@ -1,12 +1,13 @@
 import os
 from flask import Blueprint, Flask
 from flask import Flask, g
-from views import blueprint, WordCloud, AuthorNetwork
+from views import blueprint, WordCloud, AuthorNetwork, Resources
 from flask.ext.restful import Api
 from client import Client
 
 def create_app():
   api = Api()
+  api.add_resource(Resources, '/resources')
   api.add_resource(WordCloud, '/word-cloud')
   api.add_resource(AuthorNetwork, '/author-network')
 

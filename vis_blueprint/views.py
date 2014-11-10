@@ -11,6 +11,20 @@ blueprint = Blueprint(
 	static_folder=None,
 )
 
+#This resource must be available for every adsabs webservice.
+class Resources(Resource):
+  '''Overview of available resources'''
+  scopes = ['oauth:sample_application:read','oauth:sample_application:logged_in'] 
+  def get(self):
+    func_list = {}
+    for rule in current_app.url_map.iter_rules():
+      methods = current_app.view_functions[rule.endpoint].methods
+      scopes = current_app.view_functions[rule.endpoint].view_class.scopes
+      description = current_app.view_functions[rule.endpoint].view_class.__doc__
+      func_list[rule.rule] = {'methods':methods,'scopes': scopes,'description': description}
+    return func_list, 200
+
+
 
 class WordCloud(Resource):
   '''Returns collated tf/idf data for a solr query'''
@@ -24,7 +38,7 @@ class WordCloud(Resource):
 	parser.add_argument('start', type=int)
 	parser.add_argument('rows', type=int)
 	parser.add_argument('min_percent_word', type=int)
-	parser.add_argument('min_occurences_word', type=int)
+	parser.add_argument('min_occurrences_word', type=int)
 	args = parser.parse_args()
 
 	q = args.get("q")
@@ -44,8 +58,9 @@ class WordCloud(Resource):
 		min_percent_word = config.MIN_PERCENT_WORD
 
 	min_occurrences_word = args.get("min_occurrences_word", None)
+
 	if not min_occurrences_word:
-		min_occurences_word = config.MIN_OCCURENCES_WORD
+		min_occurences_word = config.MIN_OCCURRENCES_WORD
 
 	d = {
 		'q' : q,
@@ -74,9 +89,11 @@ class WordCloud(Resource):
 		return {"Error": "There was a connection error. Please try again later"}, response.status_code
 
 	if data:
-		word_cloud_json = word_cloud.generate_wordcloud(data, min_percent_word=min_percent_word, min_occurences_word=min_occurences_word)
-
-	return word_cloud_json, 200
+		word_cloud_json = word_cloud.generate_wordcloud(data, min_percent_word=min_percent_word, min_occurrences_word=min_occurrences_word)
+	if word_cloud_json:
+		return word_cloud_json, 200
+	else:
+		return {"Error": "Empty word cloud. Try changing your minimum word parameters or expanding your query."}
 
 class AuthorNetwork(Resource):
   '''Returns author network data for a solr query'''
@@ -130,12 +147,15 @@ class AuthorNetwork(Resource):
 	else:
 		return {"Error": "There was a connection error. Please try again later"}, response.status_code
 
-	if data:
-		#get_network_with_groups expects a list of normalized authors
-		data = [d.get("author_norm", []) for d in data["response"]["docs"]]
-		author_network_json = author_network.get_network_with_groups(data, max_groups)
+	#get_network_with_groups expects a list of normalized authors
+	data = [d.get("author_norm", []) for d in data["response"]["docs"]]
+	author_network_json = author_network.get_network_with_groups(data, max_groups)
 
+	if author_network_json:
 		return author_network_json, 200
+	else:
+		return {"Error": "Empty network."}
+
 
 
 
