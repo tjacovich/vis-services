@@ -132,7 +132,7 @@ def build_dict(tf_idf_info, text_info):
                     acr_freq_dict[acr]={'total_occurrences':0, "record_count" : [], "idf" : [] }
 
                 #add info about total occurrences, record count, and idf
-                acr_freq_dict[acr]['total_occurrences']+=1
+                acr_freq_dict[acr]['total_occurrences']+=d[token]['tf'][0]
                 acr_freq_dict[acr]["record_count"].append(_id)
 
                 idf = d[token]['tf-idf'][0]/d[token]['tf'][0]
