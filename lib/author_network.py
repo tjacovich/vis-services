@@ -13,6 +13,9 @@ import community
 import math
 from networkx.readwrite import json_graph
 from collections import defaultdict 
+import requests
+
+import config
 
 
 __all__ = ['generate_network']
@@ -73,7 +76,7 @@ def augment_graph_data(data, max_groups):
     
     if len(data["nodes"]) < 50:
         
-        return {"fullGraph" : data}
+        return {"fullGraph" :data}
     
     total_nodes = len(data['nodes'])   
     connector_nodes = []
@@ -140,7 +143,7 @@ def augment_graph_data(data, max_groups):
 
 
     final_data = {"summaryGraph" : json_graph.node_link_data(summary_graph), "fullGraph" : json_graph.node_link_data(G) }
-        
+
     
     return final_data
 
@@ -150,7 +153,8 @@ def augment_graph_data(data, max_groups):
 
 def get_network_with_groups(authors_lists, max_groups):
     """Function that builds the authors network"""
-        
+
+
     weight_single_authors = {}
     weight_authors_couples = {}
     
@@ -290,9 +294,6 @@ def get_network_with_groups(authors_lists, max_groups):
     authors = {'nodes': nodes, 'links': links}
         
     return augment_graph_data(authors, max_groups)
-
-
-        
 
 
 

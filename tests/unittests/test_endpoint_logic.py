@@ -129,9 +129,11 @@ class TestEndpointLogic(unittest.TestCase):
    #testing the main word cloud generation function with large data
 
     processed_data = word_cloud.generate_wordcloud(input_js_word_cloud, min_occurrences_word=2, min_percent_word=3)
+
     self.assertEqual(json.loads(json.dumps(processed_data)), test_js_word_cloud)
 
     processed_data = word_cloud.generate_wordcloud(input_js_word_cloud, min_occurrences_word=5, min_percent_word=3)
+
     self.assertEqual(json.loads(json.dumps(processed_data)), test_json_word_cloud_min_occurrences)
 
 
@@ -178,10 +180,6 @@ class TestEndpointLogic(unittest.TestCase):
     input_js_author_network = json.load(open(PROJECT_HOME + "/tests/test_input/author_network_before_groups_func_large.json"))
 
     processed_data = author_network.augment_graph_data(input_js_author_network, max_groups=max_groups)
-
-
-    with open("test2.json", "w") as f:
-        json.dump(processed_data, f)
 
     self.assertEqual(processed_data, test_js_author_network)
     

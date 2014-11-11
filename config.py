@@ -18,6 +18,7 @@ START = 0
 
 #threshold that a word stem has to pass before being included
 MIN_PERCENT_WORD = 3
+
 MIN_OCCURRENCES_WORD = 2
 
 

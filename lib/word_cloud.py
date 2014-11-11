@@ -124,12 +124,8 @@ def build_dict(tf_idf_info, text_info):
                 continue
             if "acr::" in token:
                 acr = token[5:].upper()
-                # reducing count of non-acronym version of the token by 1
-                try:
-                    freq_dict = token_freq_dict[token[5:].lower()]["tokens"]
-                    freq_dict[freq_dict.keys()[0]]-=1
-                except KeyError:
-                    pass
+
+                #note for later investigation: why are in some cases the same acronyms returning different idf values?
 
                 #if the key doesn't exist, add it
                 if acr not in acr_freq_dict:
@@ -183,8 +179,6 @@ def combine_and_process_dicts(token_freq_dict, acr_freq_dict, num_records=1, min
         else:
             most_common_t = sorted(most_common_t_list, key=lambda x:len(x[0]))[0][0]
 
-        if most_common_t == "ocred":
-            print token_freq_dict[t]
 
         #how many records did this token appear in?
         record_count = len(set(token_freq_dict[t]["record_count"]))
@@ -211,12 +205,10 @@ def combine_and_process_dicts(token_freq_dict, acr_freq_dict, num_records=1, min
     temp_dict = {}
 
     for a in acr_freq_dict:
-#       adding lower case tokens (this might not always be strictly correct?)
+#       deleting lower case tokens, which are duplicated by the tokenizer
+#       (this might delete a few extra token counts, but it simplifies the word cloud representation)
         small_a = a.lower()
         if small_a in token_freq_dict:
-            acr_freq_dict[a]['total_occurrences']+=token_freq_dict[small_a]['total_occurrences']
-            #adding any extra records to the record count list
-            acr_freq_dict[a]["record_count"].extend(old_token_freq_dict[t]["record_count"])
             del token_freq_dict[small_a]
 
         record_count = len(set(acr_freq_dict[a]["record_count"]))
@@ -254,11 +246,6 @@ def generate_wordcloud(solr_json, min_percent_word=0, min_occurrences_word=0):
                                                 min_occurrences_word=min_occurrences_word)
     
     token_freq_dict = cleanse_dict(token_freq_dict)
-
-
-    for t in token_freq_dict:
-        if token_freq_dict[t]["total_occurrences"] < token_freq_dict[t]["record_count"]:
-            print "hey!!!", t, token_freq_dict[t]
          
     return token_freq_dict
 
