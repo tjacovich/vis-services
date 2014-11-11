@@ -118,7 +118,7 @@ def augment_graph_data(data, max_groups):
     for x in summary_graph.nodes():
         summary_graph.node[x]["size"] = sum([G.node[auth].get("nodeWeight", 0) for auth in G.nodes() if G.node[auth]["group"] == x])
         authors = sorted([G.node[auth] for auth in G.nodes() if G.node[auth]["group"] == x], key = lambda x: x.get("nodeWeight", 0), reverse = True)
-        num_names = int(math.ceil(len(authors) /10))
+        num_names = min(int(math.ceil(len(authors) /10)), 6)
         summary_graph.node[x]["nodeName"] =  [d.get("nodeName", "") for d in authors[:num_names]]
         summary_graph.node[x]["authorCount"] = len(authors)
 

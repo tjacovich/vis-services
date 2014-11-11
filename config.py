@@ -1,6 +1,6 @@
 SECRET_KEY = 'this should be changed'
 
-SOLR_PATH = 'http://api.adslabs.org/v1/'
+SOLR_PATH = 'http://localhost:9000/solr/collection1/select'
 
 TVRH_SOLR_PATH = 'http://localhost:9000/solr/tvrh/'
 
