@@ -8,11 +8,11 @@
 
 from werkzeug.serving import run_simple
 from werkzeug.wsgi import DispatcherMiddleware
+import app
 
-from sample_application import app as sample_application
 #from sample_application2 import app2 as sample_application2
 
-application = DispatcherMiddleware(sample_application.create_app(),mounts={
+application = DispatcherMiddleware(app.create_app(),mounts={
   #'/mount1': sample_application2.create_app(), #Could have multiple API-applications at different mount points
   })
 

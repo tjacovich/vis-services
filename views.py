@@ -14,7 +14,7 @@ blueprint = Blueprint(
 #This resource must be available for every adsabs webservice.
 class Resources(Resource):
   '''Overview of available resources'''
-  scopes = ['oauth:sample_application:read','oauth:sample_application:logged_in'] 
+  scopes = [] 
   def get(self):
     func_list = {}
     for rule in current_app.url_map.iter_rules():
