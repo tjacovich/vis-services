@@ -35,17 +35,18 @@ class WordCloud(Resource):
     parser = reqparse.RequestParser()
     parser.add_argument('q', type=str, required=True)
     parser.add_argument('fq', type=str)
-    parser.add_argument('start', type=int)
-    parser.add_argument('rows', type=int)
-    parser.add_argument('min_percent_word', type=int)
-    parser.add_argument('min_occurrences_word', type=int)
+    parser.add_argument('start', type=int, default = current_app.config.get("WC_START"))
+    parser.add_argument('rows', type=int, default = current_app.config.get("WC_MAX_RECORDS"))
+    parser.add_argument('min_percent_word', type=int, default = current_app.config.get("WC_MIN_PERCENT_WORD"))
+    parser.add_argument('min_occurrences_word', type=int, default = current_app.config.get("WC_MIN_OCCURRENCES_WORD"))
     args = parser.parse_args()
+
 
     d = {
         'q' : args.get("q"),
         'fq' : args.get("fq"),
-        'rows':  min(current_app.config.get("WC_ROWS"), args.get("rows")),
-        'start': args.get("start", current_app.config.get("WC_START")),
+        'rows':  min(args.get("rows"), current_app.config.get("WC_MAX_RECORDS")),
+        'start': args.get("start"),
         'facets': [], 
         'highlights': [],
         #fields parameter is necessary for tvrh query
@@ -60,6 +61,7 @@ class WordCloud(Resource):
         'wt': 'json',   
          }
 
+
     response = current_app.client.session.get(current_app.config.get("TVRH_SOLR_PATH") , params = d)
     
     if response.status_code == 200:
@@ -68,7 +70,7 @@ class WordCloud(Resource):
         return {"Error": "There was a connection error. Please try again later"}, response.status_code
 
     if data:
-        word_cloud_json = word_cloud.generate_wordcloud(data, min_percent_word=args.get("min_percent_word", current_app.config.get("WC_MIN_PERCENT_WORD")), min_occurrences_word=args.get("min_occurrences_word",  current_app.config.get("WC_MIN_OCCURRENCES_WORD")))
+        word_cloud_json = word_cloud.generate_wordcloud(data, min_percent_word=args.get("min_percent_word"), min_occurrences_word=args.get("min_occurrences_word"))
     if word_cloud_json:
         return word_cloud_json, 200
     else:
@@ -83,17 +85,18 @@ class AuthorNetwork(Resource):
     parser = reqparse.RequestParser()
     parser.add_argument('q', type=str, required=True)
     parser.add_argument('fq', type=str)
-    parser.add_argument('start', type=int)
-    parser.add_argument('rows', type=int)
-    parser.add_argument('max_groups', type=int)
+    parser.add_argument('start', type=int, default = current_app.config.get("AN_START"))
+    parser.add_argument('rows', type=int, default = current_app.config.get("AN_MAX_RECORDS"))
+    parser.add_argument('max_groups', type=int, default = current_app.config.get("AN_MAX_GROUPS"))
     args = parser.parse_args()
+
 
     #request data from solr
     d = {
         'q' : args.get("q"),
-        'fq' : args.get("fq", None),
-        'rows': min(current_app.config.get("AN_ROWS"), args.get("rows")),
-        'start': args.get("start", current_app.config.get("AN_START")),
+        'fq' : args.get("fq"),
+        'rows': min(args.get("rows"), current_app.config.get("AN_MAX_RECORDS")),
+        'start': args.get("start"),
         'facets': [], 
         'fl': 'author_norm', 
         'highlights': [], 
@@ -109,7 +112,7 @@ class AuthorNetwork(Resource):
 
     #get_network_with_groups expects a list of normalized authors
     data = [d.get("author_norm", []) for d in data["response"]["docs"]]
-    author_network_json = author_network.get_network_with_groups(data, args.get("max_groups", current_app.config.get("AN_MAX_GROUPS")))
+    author_network_json = author_network.get_network_with_groups(data, args.get("max_groups"))
 
     if author_network_json:
       return author_network_json, 200

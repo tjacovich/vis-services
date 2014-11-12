@@ -85,7 +85,6 @@ def cleanse_dict(token_freq_dict):
 
 def build_dict(tf_idf_info, text_info):
 
-  print tf_idf_info
   
   '''
   this function is responsible for taking the tfidf info, and the texts of the title
@@ -148,14 +147,11 @@ def build_dict(tf_idf_info, text_info):
         if key not in token_freq_dict:
           token_freq_dict[key] = {"tokens" : {}, "idf" : [], "record_count" : []}
 
-        #this records how many individual records a word appears in,
+        #this records how many individual records a word appears in
+        token_freq_dict[key]["record_count"].append(_id)
 
         #add the total tf to the specific token
         token_freq_dict[key]["tokens"][token] = token_freq_dict[key]["tokens"].get(token, 0) + d[token]['tf'][0]
-
-
-        print "\n"
-
 
         #add idf so we can take the average later
         idf = d[token]['tf-idf'][0]/d[token]['tf'][0]
@@ -212,7 +208,8 @@ def combine_and_process_dicts(token_freq_dict, acr_freq_dict, num_records=1, min
 
   for a in acr_freq_dict:
 #       deleting lower case tokens, which are duplicated by the tokenizer
-#       (this might delete a few extra token counts, but it simplifies the word cloud representation)
+#       if there are extra tokens that were not acronyms, they'll be lost, but it's worth it to simplify
+#       the returned dictionary
     small_a = a.lower()
     if small_a in token_freq_dict:
       del token_freq_dict[small_a]

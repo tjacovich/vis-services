@@ -132,6 +132,7 @@ class TestEndpointLogic(unittest.TestCase):
 
     self.assertEqual(json.loads(json.dumps(processed_data)), test_js_word_cloud)
 
+
     processed_data = word_cloud.generate_wordcloud(input_js_word_cloud, min_occurrences_word=5, min_percent_word=3)
 
 
