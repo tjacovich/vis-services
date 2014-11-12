@@ -13,23 +13,23 @@ CLIENT = {
 
 #word cloud config
 
-MAX_RECORDS = 500
-START = 0
+WC_MAX_RECORDS = 500
+WC_START = 0
 
 #threshold that a word stem has to pass before being included
-MIN_PERCENT_WORD = 3
+WC_MIN_PERCENT_WORD = 3
 
-MIN_OCCURRENCES_WORD = 2
+WC_MIN_OCCURRENCES_WORD = 2
 
 
 
 
 #author network config
 
-MAX_RECORDS = 1000
-START = 0
+AN_MAX_RECORDS = 1000
+AN_START = 0
 
 #configuration for augmented graph data
-MAX_GROUPS = 8
+AN_MAX_GROUPS = 8
 
 

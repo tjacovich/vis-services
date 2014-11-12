@@ -22,6 +22,7 @@ def create_app():
   api.init_app(app)
   app.client = Client(app.config['CLIENT'])
   return app
+  
 
 
 if __name__ == '__main__':
