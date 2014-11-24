@@ -3,8 +3,8 @@ import unittest
 import json
 PROJECT_HOME = os.path.abspath(os.path.join(os.path.dirname(__file__),'../../'))
 sys.path.append(PROJECT_HOME)
-from lib import author_network
-from lib import word_cloud
+from lib import author_network, word_cloud, paper_network, tf_idf
+
 import config
 
 
@@ -18,6 +18,7 @@ input_js_author_network = json.load(open(PROJECT_HOME + "/tests/test_input/autho
 
 # has fewer than 50 nodes
 input_js_author_network_small = json.load(open(PROJECT_HOME + "/tests/test_input/author_network_before_groups_func_small.json"))
+
 
 #result data
 
@@ -56,44 +57,44 @@ class TestEndpointLogic(unittest.TestCase):
 
 
     tf_idf_dict = {
-        'fakeId': {
-            'abstract': {
-                'word': {
-                    'tf': [3],
-                    'tf-idf': [0.5]
-                },
-                'dashed': {
-                    'tf': [1],
-                    'tf-idf': [0.5]
-                },
-                'slashed': {
-                    'tf': [1],
-                    'tf-idf': [0.5]
-                },
-                'dashedword': {
-                    'tf': [1],
-                    'tf-idf': [0.5]
-                },
-                'slashedword': {
-                    'tf': [1],
-                    'tf-idf': [0.5]
-                }
-            },
-            'title': {
-                'research': {
-                    'tf': [1],
-                    'tf-idf': [0.1]
-                },
-                'researcher': {
-                    'tf': [1],
-                    'tf-idf': [0.9]
-                },
-                'acr::fake': {
-                    'tf': [1],
-                    'tf-idf': [0.5]
-                }
-            }
+      'fakeId': {
+        'abstract': {
+          'word': {
+            'tf': [3],
+            'tf-idf': [0.5]
+          },
+          'dashed': {
+            'tf': [1],
+            'tf-idf': [0.5]
+          },
+          'slashed': {
+            'tf': [1],
+            'tf-idf': [0.5]
+          },
+          'dashedword': {
+            'tf': [1],
+            'tf-idf': [0.5]
+          },
+          'slashedword': {
+            'tf': [1],
+            'tf-idf': [0.5]
+          }
+        },
+        'title': {
+          'research': {
+            'tf': [1],
+            'tf-idf': [0.1]
+          },
+          'researcher': {
+            'tf': [1],
+            'tf-idf': [0.9]
+          },
+          'acr::fake': {
+            'tf': [1],
+            'tf-idf': [0.5]
+          }
         }
+      }
     }
 
     text_list = [{'id': 'fakeId', 'abstract': 'word dashed-word slashed/word', 'title' : 'research researcher FAKE'}]
@@ -126,7 +127,7 @@ class TestEndpointLogic(unittest.TestCase):
 
     self.assertEqual(combined_dict, expected_combined_dict)
 
-   #testing the main word cloud generation function with large data
+     #testing the main word cloud generation function with large data
 
     processed_data = word_cloud.generate_wordcloud(input_js_word_cloud, min_occurrences_word=2, min_percent_word=3)
 
@@ -179,12 +180,38 @@ class TestEndpointLogic(unittest.TestCase):
 
     #testing entire function
 
+    self.maxDiff = None
+
     input_js_author_network = json.load(open(PROJECT_HOME + "/tests/test_input/author_network_before_groups_func_large.json"))
 
-    processed_data = author_network.augment_graph_data(input_js_author_network, max_groups=max_groups)
+    processed_data = json.loads(json.dumps(author_network.augment_graph_data(input_js_author_network, max_groups=max_groups), sort_keys=True))
+
 
     self.assertEqual(processed_data, test_js_author_network)
-    
+
+
+  def test_paper_network_resource(self):
+
+    #first, test the tf-idf library
+
+    self.maxDiff = None
+
+    input_js_tf_idf = json.load(open(PROJECT_HOME + "/tests/test_input/tf_idf_input.json"))
+
+    test_js_tf_idf = json.load(open(PROJECT_HOME + "/tests/test_output/tf_idf_output.json"))
+
+    processed_data = json.loads(json.dumps(tf_idf.get_tf_idf_vals(input_js_tf_idf), sort_keys=True))
+
+    self.assertEqual(processed_data, test_js_tf_idf)
+
+
+
+
+
+
+
+
+  
 
 
 

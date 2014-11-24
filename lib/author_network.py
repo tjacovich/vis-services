@@ -13,9 +13,6 @@ import community
 import math
 from networkx.readwrite import json_graph
 from collections import defaultdict 
-import requests
-
-import config
 
 
 __all__ = ['generate_network']
@@ -73,12 +70,13 @@ def _remap_dict_in_range(mydict, newrange=[1, 100]):
 #Alex's function that takes a generated graph and gives you back a graph with groups
 
 def augment_graph_data(data, max_groups):
-  
-  if len(data["nodes"]) < 50:
+   
+  total_nodes = len(data['nodes'])   
+
+  if total_nodes < 50:
     
     return {"fullGraph" :data}
-  
-  total_nodes = len(data['nodes'])   
+    
   connector_nodes = []
 
   # checking to see if one node connects to all other nodes, and removing it from consideration
@@ -118,7 +116,7 @@ def augment_graph_data(data, max_groups):
   for x in summary_graph.nodes():
     summary_graph.node[x]["size"] = sum([G.node[auth].get("nodeWeight", 0) for auth in G.nodes() if G.node[auth]["group"] == x])
     authors = sorted([G.node[auth] for auth in G.nodes() if G.node[auth]["group"] == x], key = lambda x: x.get("nodeWeight", 0), reverse = True)
-    num_names = min(int(math.ceil(len(authors) /10)), 6)
+    num_names = max(min(int(math.ceil(len(authors) /10)), 6), 1)
     summary_graph.node[x]["nodeName"] =  [d.get("nodeName", "") for d in authors[:num_names]]
     summary_graph.node[x]["authorCount"] = len(authors)
 
@@ -141,6 +139,13 @@ def augment_graph_data(data, max_groups):
     if node[1]["group"] not in top_node_ids:
       G.remove_node(node[0])
 
+#remove self links from summary graph
+# I don't know why these are being added by community.induced_graph
+  for edge in summary_graph.edges(data = True):
+    if edge[0] == edge[1]:
+      summary_graph.remove_edge(edge[0], edge[1])
+    
+
 
   final_data = {"summaryGraph" : json_graph.node_link_data(summary_graph), "fullGraph" : json_graph.node_link_data(G) }
 
@@ -154,6 +159,8 @@ def augment_graph_data(data, max_groups):
 def get_network_with_groups(authors_lists, max_groups):
   """Function that builds the authors network"""
 
+  if not authors_lists:
+    return {}
 
   weight_single_authors = {}
   weight_authors_couples = {}

@@ -2,6 +2,7 @@ from flask import current_app, Blueprint, jsonify, request
 from flask.ext.restful import Resource, reqparse
 from lib import word_cloud
 from lib import author_network
+from lib import paper_network
 
 
 
@@ -61,7 +62,6 @@ class WordCloud(Resource):
         'wt': 'json',   
          }
 
-
     response = current_app.client.session.get(current_app.config.get("TVRH_SOLR_PATH") , params = d)
     
     if response.status_code == 200:
@@ -103,6 +103,7 @@ class AuthorNetwork(Resource):
         'wt' : 'json'
         }
 
+
     response = current_app.client.session.get(current_app.config.get("SOLR_PATH") , params = d)
 
     if response.status_code == 200:
@@ -119,6 +120,49 @@ class AuthorNetwork(Resource):
     else:
       return {"Error": "Empty network."}
 
+
+class PaperNetwork(Resource):
+  '''Returns paper network data for a solr query'''
+  scopes = [] 
+
+  def get(self):
+
+    parser = reqparse.RequestParser()
+    parser.add_argument('q', type=str, required=True)
+    parser.add_argument('fq', type=str)
+    parser.add_argument('start', type=int, default = current_app.config.get("PN_START"))
+    parser.add_argument('rows', type=int, default = current_app.config.get("PN_MAX_RECORDS"))
+    parser.add_argument('max_groups', type=int, default = current_app.config.get("PN_MAX_GROUPS"))
+    args = parser.parse_args()
+
+
+    #request data from solr
+    d = {
+        'q' : args.get("q"),
+        'fq' : args.get("fq"),
+        'rows': min(args.get("rows"), current_app.config.get("AN_MAX_RECORDS")),
+        'start': args.get("start"),
+        'facets': [], 
+        'fl': ['bibcode,title,first_author,year','citation_count','read_count','reference'], 
+        'highlights': [], 
+        'wt' : 'json'
+        }
+
+    response = current_app.client.session.get(current_app.config.get("SOLR_PATH") , params = d)
+
+    if response.status_code == 200:
+      data = response.json()
+    else:
+      return {"Error": "There was a connection error. Please try again later"}, response.status_code
+
+    #get_network_with_groups expects a list of normalized authors
+    data = data["response"]["docs"]
+    author_network_json = paper_network.get_papernetwork(data, args.get("max_groups"))
+
+    if author_network_json:
+      return author_network_json, 200
+    else:
+      return {"Error": "Empty network."}
 
 
 

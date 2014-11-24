@@ -1,7 +1,7 @@
 import os
 from flask import Blueprint, Flask
 from flask import Flask, g
-from views import blueprint, WordCloud, AuthorNetwork, Resources
+from views import blueprint, WordCloud, AuthorNetwork, PaperNetwork, Resources
 from flask.ext.restful import Api
 from client import Client
 
@@ -10,6 +10,8 @@ def create_app():
   api.add_resource(Resources, '/resources')
   api.add_resource(WordCloud, '/word-cloud')
   api.add_resource(AuthorNetwork, '/author-network')
+  api.add_resource(PaperNetwork, '/paper-network')
+
 
   app = Flask(__name__, static_folder=None) 
   app.url_map.strict_slashes = False

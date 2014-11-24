@@ -33,3 +33,12 @@ AN_START = 0
 AN_MAX_GROUPS = 8
 
 
+#paper network config
+
+PN_MAX_RECORDS = 1000
+PN_START = 0
+
+#configuration for augmented graph data
+PN_MAX_GROUPS = 10
+
+

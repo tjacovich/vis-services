@@ -6,3 +6,4 @@ requests==2.4.3
 stemming==1.0.1
 networkx==1.9.1 
 python-louvain==0.3
+numpy
