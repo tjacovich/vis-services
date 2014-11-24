@@ -14,6 +14,12 @@ by the algorithm that generates the groups, it just limits the amount of informa
 
 
 
+### Paper Network 
+
+This endpoint is very similar to the author network, with nodes representing individual papers and links representing references that these nodes have in common.
+
+The implementation is different in that summary groups are titled with word clouds of the titles of the papers that are members of the group, while in the author network the title is just a list of the most common authors.
+
 
 ### Word Cloud
 
