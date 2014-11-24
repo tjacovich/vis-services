@@ -140,7 +140,7 @@ class PaperNetwork(Resource):
     d = {
         'q' : args.get("q"),
         'fq' : args.get("fq"),
-        'rows': min(args.get("rows"), current_app.config.get("AN_MAX_RECORDS")),
+        'rows': min(args.get("rows"), current_app.config.get("PN_MAX_RECORDS")),
         'start': args.get("start"),
         'facets': [], 
         'fl': ['bibcode,title,first_author,year','citation_count','read_count','reference'], 
