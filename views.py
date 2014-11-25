@@ -150,8 +150,6 @@ class PaperNetwork(Resource):
 
     response = current_app.client.session.get(current_app.config.get("SOLR_PATH") , params = d)
 
-    print response.url
-
     if response.status_code == 200:
       data = response.json()
     else:

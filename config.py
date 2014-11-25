@@ -35,7 +35,8 @@ AN_MAX_GROUPS = 8
 
 #paper network config
 
-PN_MAX_RECORDS = 1000
+#paper network calculation is kind of slow, so limiting the number of records for now.
+PN_MAX_RECORDS = 150
 PN_START = 0
 
 #configuration for augmented graph data

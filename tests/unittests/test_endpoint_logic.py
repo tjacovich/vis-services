@@ -19,6 +19,9 @@ input_js_author_network = json.load(open(PROJECT_HOME + "/tests/test_input/autho
 # has fewer than 50 nodes
 input_js_author_network_small = json.load(open(PROJECT_HOME + "/tests/test_input/author_network_before_groups_func_small.json"))
 
+input_js_paper_network = json.load(open(PROJECT_HOME + "/tests/test_input/paper_network_before_groups_func_large.json"))
+
+
 
 #result data
 
@@ -28,6 +31,7 @@ test_json_word_cloud_min_occurrences = json.load(open(PROJECT_HOME + "/tests/tes
 test_js_author_network = json.load(open(PROJECT_HOME + "/tests/test_output/author_network_accomazzi,a.json"))
 test_js_author_network_max_groups = json.load(open(PROJECT_HOME + "/tests/test_output/author_network_accomazzi,a_max_groups_3.json"))
 
+test_js_paper_network =  json.load(open(PROJECT_HOME + "/tests/test_output/paper_network_star.json"))
 
 class TestEndpointLogic(unittest.TestCase):
 
@@ -203,6 +207,12 @@ class TestEndpointLogic(unittest.TestCase):
     processed_data = json.loads(json.dumps(tf_idf.get_tf_idf_vals(input_js_tf_idf), sort_keys=True))
 
     self.assertEqual(processed_data, test_js_tf_idf)
+
+    # now just test input/output
+
+    processed_data = json.loads(json.dumps(paper_network.get_papernetwork(input_js_paper_network["response"]["docs"], 10), sort_keys=True))
+
+    self.assertEqual(processed_data, test_js_paper_network)
 
 
 
