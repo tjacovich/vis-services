@@ -8,7 +8,7 @@ punctuation_regex = re.compile('[%s]' % re.escape(string.punctuation))
 
 markup_regex = re.compile(r".*sub.*sub|.*sup.*sup")
 
-tiny_stopword_list = ["and", "or", "an", "a", "as", "at", "of", "to", "on", "for", "be", "from", "in", "by", "with", "the"]
+tiny_stopword_list = ["and", "or", "an", "a", "as", "at", "of", "to", "on", "for", "be", "from", "in", "by", "with", "the", "not", "but"]
 
 def tokenize(list_of_titles):
   l = " ".join(list_of_titles)
