@@ -86,23 +86,25 @@ def augment_graph_data(data, max_groups):
     if len(links) == total_nodes -1:
       connector_nodes.append(n)
       data['nodes'][i]["delete"] = True
-      for i2, n2 in enumerate(data['links']):
-        if n2["source"] == i or n2["source"] == i:
-          data['links'][i2]["delete"] = True
+    else:
+        data['nodes'][i]["delete"] = False
+        
 
-  data['nodes'] = [n for n in data['nodes'] if not n.get("delete", False)]
-  data['links'] = [l for l in data['links'] if not l.get("delete", False)]
-  
   #create the networkx graph
   G = nx.Graph()
   for i,x in enumerate(data['nodes']):
-    G.add_node(i, nodeName= x["nodeName"], nodeWeight = x["nodeWeight"])
+    G.add_node(i, nodeName= x["nodeName"], nodeWeight = x["nodeWeight"], delete=x["delete"])
 
   for i,x in enumerate(data['links']):
     G.add_edge(x["source"], x["target"], weight = x["value"])
    
   all_nodes = G.nodes()
-  
+    
+  #remove nodes marked "delete" before we generate the graph!
+  for x in G.nodes(True):
+    if x[1]["delete"] == True:
+        G.remove_node(x[0])
+        
   #attach group names to all nodes
   partition = community.best_partition(G)
 

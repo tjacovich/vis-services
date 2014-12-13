@@ -22,7 +22,6 @@ input_js_author_network_small = json.load(open(PROJECT_HOME + "/tests/test_input
 input_js_paper_network = json.load(open(PROJECT_HOME + "/tests/test_input/paper_network_before_groups_func_large.json"))
 
 
-
 #result data
 
 test_js_word_cloud = json.load(open(PROJECT_HOME + "/tests/test_output/word_cloud_accomazzi,a.json"))
@@ -30,6 +29,7 @@ test_json_word_cloud_min_occurrences = json.load(open(PROJECT_HOME + "/tests/tes
 
 test_js_author_network = json.load(open(PROJECT_HOME + "/tests/test_output/author_network_accomazzi,a.json"))
 test_js_author_network_max_groups = json.load(open(PROJECT_HOME + "/tests/test_output/author_network_accomazzi,a_max_groups_3.json"))
+test_js_author_network_alberto = json.load(open(PROJECT_HOME + "/tests/test_input/kurtz_query.json"))
 
 test_js_paper_network =  json.load(open(PROJECT_HOME + "/tests/test_output/paper_network_star.json"))
 
@@ -149,6 +149,8 @@ class TestEndpointLogic(unittest.TestCase):
 
     #current default
     max_groups = 8
+    self.maxDiff = None
+
 
     #testing group aggregation function
 
@@ -182,16 +184,44 @@ class TestEndpointLogic(unittest.TestCase):
 
     self.assertLessEqual(len(groups), max_groups)
 
-    #testing entire function
-
-    self.maxDiff = None
+    # #testing entire function
 
     input_js_author_network = json.load(open(PROJECT_HOME + "/tests/test_input/author_network_before_groups_func_large.json"))
 
     processed_data = json.loads(json.dumps(author_network.augment_graph_data(input_js_author_network, max_groups=max_groups), sort_keys=True))
 
-
     self.assertEqual(processed_data, test_js_author_network)
+
+
+    #doing a sanity check to make sure Alberto is linked to the proper people in the graph
+
+    def testLinks(data):
+        alberto_index = [(i, n) for i, n in enumerate(data["nodes"]) if n.get("nodeName") == "Accomazzi, A"][0][0]
+        alinks = [(i, l) for i,l in enumerate(data["links"]) if l["source"] == alberto_index or l["target"] == alberto_index]
+        l = []
+        for a in alinks:
+            if a[1]["source"] != alberto_index:
+                l.append(data["nodes"][a[1]["source"]].get("nodeName", 0))
+            elif a[1]["target"] != alberto_index:
+                l.append(data["nodes"][a[1]["target"]].get("nodeName", 0))
+        return sorted(l)
+
+
+    self.assertEqual(testLinks(author_network.get_network_with_groups(test_js_author_network_alberto, 8)["fullGraph"]), [u'Bohlen, E',
+ u'Demleitner, M',
+ u'Eichhorn, G',
+ u'Elwell, B',
+ u'Ginsparg, P',
+ u'Grant, C',
+ u'Henneken, E',
+ u'Martimbeau, N',
+ u'Murray, S',
+ u'Thompson, D',
+ u'Warner, S',
+ u'Watson, J'])
+
+
+
 
 
   def test_paper_network_resource(self):
