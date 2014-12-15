@@ -13,9 +13,6 @@ import config
 
 input_js_word_cloud = json.load(open(PROJECT_HOME + "/tests/test_input/word_cloud_input.json"))
 
-#has more than 50 nodes
-input_js_author_network = json.load(open(PROJECT_HOME + "/tests/test_input/author_network_before_groups_func_large.json"))
-
 # has fewer than 50 nodes
 input_js_author_network_small = json.load(open(PROJECT_HOME + "/tests/test_input/author_network_before_groups_func_small.json"))
 
@@ -137,9 +134,7 @@ class TestEndpointLogic(unittest.TestCase):
 
     self.assertEqual(json.loads(json.dumps(processed_data)), test_js_word_cloud)
 
-
     processed_data = word_cloud.generate_wordcloud(input_js_word_cloud, min_occurrences_word=5, min_percent_word=3)
-
 
     self.assertEqual(json.loads(json.dumps(processed_data)), test_json_word_cloud_min_occurrences)
 
@@ -194,6 +189,7 @@ class TestEndpointLogic(unittest.TestCase):
 
 
     #doing a sanity check to make sure Alberto is linked to the proper people in the graph
+    #previously the way I calculated the connector node was causing issues
 
     def testLinks(data):
         alberto_index = [(i, n) for i, n in enumerate(data["nodes"]) if n.get("nodeName") == "Accomazzi, A"][0][0]
@@ -221,8 +217,33 @@ class TestEndpointLogic(unittest.TestCase):
  u'Watson, J'])
 
 
+    #making sure Kurtz (the connector node) has been given the appropriate link weights
+    #this is calculated by me rather than by the summary graph generator
 
+    without_groups = author_network.get_network(test_js_author_network_alberto)
 
+    with_groups = author_network.get_network_with_groups(test_js_author_network_alberto, 8)
+
+    kurtzIndex = [i for i,m in enumerate(without_groups["nodes"]) if m["nodeName"] == "Kurtz, M"][0]
+
+    nodeNames = [n["nodeName"] for n in with_groups['fullGraph']["nodes"]]
+
+    #all names that kurtz is linked to in the final graph
+    connection_indexes = [i for i, m in enumerate(without_groups["nodes"]) if m["nodeName"] in nodeNames]
+
+    #the sum of the values of those links
+    total_link_vals = [l["value"] for l in without_groups["links"] if (l["source"] == kurtzIndex and l["target"] in connection_indexes) or (l["target"] == kurtzIndex and l["source"] in connection_indexes)]
+
+    total_link_vals = sum(total_link_vals)
+
+    #index of Kurtz in the summary nodes
+    kurtzSummaryIndex = [i for i,m in enumerate(with_groups["summaryGraph"]["nodes"]) if m["nodeName"][0].keys()[0] == "Kurtz, M"][0]
+
+    total_connections = [l for l in with_groups["summaryGraph"]["links"] if l["source"] == kurtzSummaryIndex or l["target"] == kurtzSummaryIndex]
+
+    sum_finished = sum([d["weight"] for d in total_connections])
+
+    self.assertEqual(int(sum_finished), int(total_link_vals))
 
   def test_paper_network_resource(self):
 
