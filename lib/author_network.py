@@ -117,8 +117,8 @@ def augment_graph_data(data, max_groups):
   for x in summary_graph.nodes():
     summary_graph.node[x]["size"] = sum([G.node[auth].get("nodeWeight", 0) for auth in G.nodes() if G.node[auth]["group"] == x])
     authors = sorted([G.node[auth] for auth in G.nodes() if G.node[auth]["group"] == x], key = lambda x: x.get("nodeWeight", 0), reverse = True)
-    num_names = max(min(int(math.ceil(len(authors) /10)), 6), 1)
-    summary_graph.node[x]["nodeName"] =  [{d.get("nodeName"): d.get("nodeWeight")} for d in authors[:num_names]]
+    num_names = max(min(int(math.ceil(len(authors) /10)), 4), 1)
+    summary_graph.node[x]["nodeName"] =  {d.get("nodeName"): d.get("nodeWeight") for d in authors[:num_names]}
     summary_graph.node[x]["authorCount"] = len(authors)
 
  #remove all but top n groups from summary graph
@@ -130,7 +130,7 @@ def augment_graph_data(data, max_groups):
       
 #adding connector nodes
   for c in connector_nodes:
-    summary_graph.add_node(c["nodeName"], nodeName = [{c.get("nodeName") : c.get("nodeWeight")}], connector = True, size = c.get("nodeWeight"))
+    summary_graph.add_node(c["nodeName"], nodeName = {c.get("nodeName") : c.get("nodeWeight")}, connector = True, size = c.get("nodeWeight"))
     oldConIndex = [i for i,m in enumerate(data["nodes"]) if m["nodeName"] == c["nodeName"]][0]
     for x in summary_graph.nodes():
         group_weight = 0
@@ -150,12 +150,10 @@ def augment_graph_data(data, max_groups):
       G.remove_node(node[0])
 
 #remove self links from summary graph
-# I don't know why these are being added by community.induced_graph
-  for edge in summary_graph.edges(data = True):
-    if edge[0] == edge[1]:
-      summary_graph.remove_edge(edge[0], edge[1])
+  # for edge in summary_graph.edges(data = True):
+  #   if edge[0] == edge[1]:
+  #     summary_graph.remove_edge(edge[0], edge[1])
     
-
 
   final_data = {"summaryGraph" : json_graph.node_link_data(summary_graph), "fullGraph" : json_graph.node_link_data(G) }
 

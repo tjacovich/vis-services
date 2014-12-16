@@ -18,7 +18,6 @@ input_js_author_network_small = json.load(open(PROJECT_HOME + "/tests/test_input
 
 input_js_paper_network = json.load(open(PROJECT_HOME + "/tests/test_input/paper_network_before_groups_func_large.json"))
 
-
 #result data
 
 test_js_word_cloud = json.load(open(PROJECT_HOME + "/tests/test_output/word_cloud_accomazzi,a.json"))
@@ -185,6 +184,8 @@ class TestEndpointLogic(unittest.TestCase):
 
     processed_data = json.loads(json.dumps(author_network.augment_graph_data(input_js_author_network, max_groups=max_groups), sort_keys=True))
 
+
+
     self.assertEqual(processed_data, test_js_author_network)
 
 
@@ -237,7 +238,7 @@ class TestEndpointLogic(unittest.TestCase):
     total_link_vals = sum(total_link_vals)
 
     #index of Kurtz in the summary nodes
-    kurtzSummaryIndex = [i for i,m in enumerate(with_groups["summaryGraph"]["nodes"]) if m["nodeName"][0].keys()[0] == "Kurtz, M"][0]
+    kurtzSummaryIndex = [i for i,m in enumerate(with_groups["summaryGraph"]["nodes"]) if m["nodeName"].keys()[0] == "Kurtz, M"][0]
 
     total_connections = [l for l in with_groups["summaryGraph"]["links"] if l["source"] == kurtzSummaryIndex or l["target"] == kurtzSummaryIndex]
 

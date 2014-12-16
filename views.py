@@ -36,6 +36,7 @@ class WordCloud(Resource):
     parser = reqparse.RequestParser()
     parser.add_argument('q', type=str, required=True)
     parser.add_argument('fq', type=str)
+    parser.add_argument('sort', type=str)
     parser.add_argument('start', type=int, default = current_app.config.get("WC_START"))
     parser.add_argument('rows', type=int, default = current_app.config.get("WC_MAX_RECORDS"))
     parser.add_argument('min_percent_word', type=int, default = current_app.config.get("WC_MIN_PERCENT_WORD"))
@@ -46,6 +47,7 @@ class WordCloud(Resource):
     d = {
         'q' : args.get("q"),
         'fq' : args.get("fq"),
+        'sort' : args.get("sort"),
         'rows':  min(args.get("rows"), current_app.config.get("WC_MAX_RECORDS")),
         'start': args.get("start"),
         'facets': [], 
@@ -67,7 +69,7 @@ class WordCloud(Resource):
     if response.status_code == 200:
         data = response.json()
     else:
-        return {"Error": "There was a connection error. Please try again later"}, response.status_code
+        return {"Error": "There was a connection error. Please try again later"}, response.status_code, response
 
     if data:
         word_cloud_json = word_cloud.generate_wordcloud(data, min_percent_word=args.get("min_percent_word"), min_occurrences_word=args.get("min_occurrences_word"))
@@ -85,6 +87,7 @@ class AuthorNetwork(Resource):
     parser = reqparse.RequestParser()
     parser.add_argument('q', type=str, required=True)
     parser.add_argument('fq', type=str)
+    parser.add_argument('sort', type=str)
     parser.add_argument('start', type=int, default = current_app.config.get("AN_START"))
     parser.add_argument('rows', type=int, default = current_app.config.get("AN_MAX_RECORDS"))
     parser.add_argument('max_groups', type=int, default = current_app.config.get("AN_MAX_GROUPS"))
@@ -96,6 +99,7 @@ class AuthorNetwork(Resource):
         'q' : args.get("q"),
         'fq' : args.get("fq"),
         'rows': min(args.get("rows"), current_app.config.get("AN_MAX_RECORDS")),
+        'sort' : args.get("sort"),
         'start': args.get("start"),
         'facets': [], 
         'fl': 'author_norm', 
@@ -109,7 +113,7 @@ class AuthorNetwork(Resource):
     if response.status_code == 200:
       data = response.json()
     else:
-      return {"Error": "There was a connection error. Please try again later"}, response.status_code
+      return {"Error": "There was a connection error. Please try again later"}, response.status_code, response
 
     #get_network_with_groups expects a list of normalized authors
     data = [d.get("author_norm", []) for d in data["response"]["docs"]]
@@ -130,6 +134,7 @@ class PaperNetwork(Resource):
     parser = reqparse.RequestParser()
     parser.add_argument('q', type=str, required=True)
     parser.add_argument('fq', type=str)
+    parser.add_argument('sort', type=str)
     parser.add_argument('start', type=int, default = current_app.config.get("PN_START"))
     parser.add_argument('rows', type=int, default = current_app.config.get("PN_MAX_RECORDS"))
     parser.add_argument('max_groups', type=int, default = current_app.config.get("PN_MAX_GROUPS"))
@@ -141,6 +146,7 @@ class PaperNetwork(Resource):
         'q' : args.get("q"),
         'fq' : args.get("fq"),
         'rows': min(args.get("rows"), current_app.config.get("PN_MAX_RECORDS")),
+        'sort' : args.get("sort"),
         'start': args.get("start"),
         'facets': [], 
         'fl': ['bibcode,title,first_author,year,citation_count,read_count,reference'], 
@@ -153,7 +159,7 @@ class PaperNetwork(Resource):
     if response.status_code == 200:
       data = response.json()
     else:
-      return {"Error": "There was a connection error. Please try again later"}, response.status_code
+      return {"Error": "There was a connection error. Please try again later"}, response.status_code, response
 
     #get_network_with_groups expects a list of normalized authors
     data = data["response"]["docs"]

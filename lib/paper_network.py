@@ -111,16 +111,24 @@ def augment_graph_data(data, max_groups):
   #attaching title 'word clouds' to the nodes
   significant_words = tf_idf.get_tf_idf_vals(titles)
   for x in summary_graph.nodes():
-    #how many words should we show on the group? max 6, otherwise 1 per every 2 papers
-    summary_graph.node[x]["nodeName"] =  dict(sorted(significant_words[x].items(), key = lambda x: x[1], reverse = True)[:6])
+    #remove the ones with only 1 paper
+    if summary_graph.node[x]["paperCount"] == 1:
+      summary_graph.remove_node(x)
+    else:
+      #otherwise, give them a title
+      #how many words should we show on the group? max 6, otherwise 1 per every 2 papers
+      summary_graph.node[x]["nodeName"] =  dict(sorted(significant_words[x].items(), key = lambda x: x[1], reverse = True)[:6])
 
 
  #remove all but top n groups from summary graph
   top_nodes = sorted([n for n in summary_graph.nodes(data = True)], key= lambda x : x[1]["size"], reverse = True )[:max_groups]
+  top_nodes = [t for t in top_nodes if t >=1]
   top_node_ids = [n[0] for n in top_nodes]
   for group_id in summary_graph.nodes():
     if group_id not in top_node_ids:
       summary_graph.remove_node(group_id)
+
+
   
  #remove nodes from full graph that aren't in top group
  #this automatically takes care of edges, too
@@ -130,9 +138,9 @@ def augment_graph_data(data, max_groups):
 
 #remove self links from summary graph
 # I don't know why these are being added by community.induced_graph
-  for edge in summary_graph.edges(data = True):
-    if edge[0] == edge[1]:
-      summary_graph.remove_edge(edge[0], edge[1])
+  # for edge in summary_graph.edges(data = True):
+  #   if edge[0] == edge[1]:
+  #     summary_graph.remove_edge(edge[0], edge[1])
     
 
   final_data = {"summaryGraph" : json_graph.node_link_data(summary_graph), "fullGraph" : json_graph.node_link_data(G) }
