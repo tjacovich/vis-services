@@ -15,21 +15,30 @@ blueprint = Blueprint(
 #This resource must be available for every adsabs webservice.
 class Resources(Resource):
   '''Overview of available resources'''
-  scopes = [] 
+  scopes = []
+  rate_limit = [1000,60*60*24]
   def get(self):
     func_list = {}
+
+    clsmembers = [i[1] for i in inspect.getmembers(sys.modules[__name__], inspect.isclass)]
     for rule in current_app.url_map.iter_rules():
-      methods = current_app.view_functions[rule.endpoint].methods
-      scopes = current_app.view_functions[rule.endpoint].view_class.scopes
-      description = current_app.view_functions[rule.endpoint].view_class.__doc__
-      func_list[rule.rule] = {'methods':methods,'scopes': scopes,'description': description}
+      f = current_app.view_functions[rule.endpoint]
+      #If we load this webservice as a module, we can't guarantee that current_app only has these views
+      if not hasattr(f,'view_class') or f.view_class not in clsmembers:
+        continue
+      methods = f.view_class.methods
+      scopes = f.view_class.scopes
+      rate_limit = f.view_class.rate_limit
+      description = f.view_class.__doc__
+      func_list[rule.rule] = {'methods':methods,'scopes': scopes,'description': description,'rate_limit':rate_limit}
     return func_list, 200
 
 
 
 class WordCloud(Resource):
   '''Returns collated tf/idf data for a solr query'''
-  scopes = [] 
+  scopes = ['oauth:api:search'] 
+  rate_limit = [1000,60*60*24]
 
   def get(self):
 
@@ -62,11 +71,12 @@ class WordCloud(Resource):
     if word_cloud_json:
         return word_cloud_json, 200
     else:
-        return {"Error": "Empty word cloud. Try changing your minimum word parameters or expanding your query."}
+        return {"Error": "Empty word cloud. Try changing your minimum word parameters or expanding your query."}, 200
 
 class AuthorNetwork(Resource):
   '''Returns author network data for a solr query'''
-  scopes = [] 
+  scopes = ['oauth:api:search'] 
+  rate_limit = [1000,60*60*24]
 
   def get(self):
 
@@ -91,12 +101,13 @@ class AuthorNetwork(Resource):
     if author_network_json:
       return author_network_json, 200
     else:
-      return {"Error": "Empty network."}
+      return {"Error": "Empty network."}, 200
 
 
 class PaperNetwork(Resource):
   '''Returns paper network data for a solr query'''
-  scopes = [] 
+  scopes = ['oauth:api:search'] 
+  rate_limit = [1000,60*60*24] 
 
   def get(self):
 
@@ -110,6 +121,7 @@ class PaperNetwork(Resource):
 
     if response.status_code == 200:
       data = response.json()
+
     else:
       return {"Error": "There was a connection error. Please try again later", "Error Info": response.text}, response.status_code
 
@@ -120,7 +132,7 @@ class PaperNetwork(Resource):
     if author_network_json:
       return author_network_json, 200
     else:
-      return {"Error": "Empty network."}
+      return {"Error": "Empty network."}, 200
 
 
 
