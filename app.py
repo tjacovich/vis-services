@@ -5,8 +5,8 @@ from views import blueprint, WordCloud, AuthorNetwork, PaperNetwork, Resources
 from flask.ext.restful import Api
 from client import Client
 
-def create_app():
-
+def create_app(blueprint_only=False):
+  
   app = Flask(__name__, static_folder=None) 
 
   app.url_map.strict_slashes = False
@@ -17,7 +17,7 @@ def create_app():
     pass
   app.client = Client(app.config['CLIENT'])
 
-  api = Api()
+  api = Api(blueprint)
   api.add_resource(Resources, '/resources')
   api.add_resource(WordCloud, '/word-cloud')
   api.add_resource(AuthorNetwork, '/author-network')
