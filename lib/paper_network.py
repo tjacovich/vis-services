@@ -79,7 +79,7 @@ def augment_graph_data(data, max_groups):
   #create the networkx graph
   G = nx.Graph()
   for i,x in enumerate(data['nodes']):
-    G.add_node(i, nodeName= x["nodeName"], nodeWeight = x["nodeWeight"], title=x["title"], citation_count=x["citation_count"], first_author = x["first_author"])
+    G.add_node(i, nodeName= x["nodeName"], nodeWeight = x["nodeWeight"], title=x["title"], citation_count=x["citation_count"], first_author = x["first_author"], read_count = x["read_count"])
 
   for i,x in enumerate(data['links']):
     G.add_edge(x["source"], x["target"], weight = x["value"], overlap = x["overlap"])
@@ -102,6 +102,9 @@ def augment_graph_data(data, max_groups):
   for x in summary_graph.nodes():
     #size of each node is cumulative citations
     summary_graph.node[x]["size"] = sum([G.node[paper].get("nodeWeight", 0) for paper in G.nodes() if G.node[paper]["group"] == x])
+
+    summary_graph.node[x]["total_reads"] = sum([G.node[paper].get("read_count", 0) for paper in G.nodes() if G.node[paper]["group"] == x])
+
     papers = sorted([G.node[paper] for paper in G.nodes() if G.node[paper]["group"] == x], key = lambda x: x.get("nodeWeight", 0), reverse = True)
 
     titles[x] = [p["title"]for p in papers]
@@ -128,6 +131,29 @@ def augment_graph_data(data, max_groups):
     if group_id not in top_node_ids:
       summary_graph.remove_node(group_id)
 
+ #continuing to enhance the information: add to group info about the most common co-references
+  for x in summary_graph.nodes():
+    #make a float so division later to get a percent makes sense
+    num_papers =  float(summary_graph.node[x]["paperCount"])
+    references = {}
+    #find all members of group x
+    indexes =  [paperIndex for paperIndex in G.nodes() if G.node[paperIndex]["group"] == x]
+    for edge in G.edges(data=True):
+        #if it passes, it's an inter-group connection
+        # [0] is source, [1] is target, [2] is data dict
+        paper_one = edge[0]
+        paper_two = edge[1]
+        if paper_one in indexes and paper_two in indexes:
+            for bib in edge[2]["overlap"]:
+                if bib in references:
+                    references[bib].update([paper_one, paper_two])
+                else:
+                    references[bib] = set([paper_one, paper_two])
+
+    count_references = sorted(references.items(), key=lambda x:len(x[1]), reverse = True)[:5]
+    top_common_references = [(tup[0], float("{0:.2f}".format(len(tup[1])/num_papers))) for tup in count_references]
+    top_common_references = dict(top_common_references)
+    summary_graph.node[x]["topCommonReferences"] = top_common_references
 
   
  #remove nodes from full graph that aren't in top group
@@ -137,7 +163,6 @@ def augment_graph_data(data, max_groups):
       G.remove_node(node[0])
 
 #remove self links from summary graph
-# I don't know why these are being added by community.induced_graph
   # for edge in summary_graph.edges(data = True):
   #   if edge[0] == edge[1]:
   #     summary_graph.remove_edge(edge[0], edge[1])
