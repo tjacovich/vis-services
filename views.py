@@ -1,5 +1,7 @@
 from flask import current_app, Blueprint, jsonify, request
 from flask.ext.restful import Resource, reqparse
+import inspect
+import sys
 from lib import word_cloud
 from lib import author_network
 from lib import paper_network

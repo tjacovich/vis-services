@@ -1,8 +1,9 @@
 SECRET_KEY = 'this should be changed'
 
-SOLR_PATH = 'http://localhost:9000/solr/collection1/select'
+SOLR_PATH = 'http://0.0.0.0:9000/solr/select'
 
-TVRH_SOLR_PATH = 'http://localhost:9000/solr/tvrh/'
+TVRH_SOLR_PATH = 'http://0.0.0.0:9000/solr/tvrh/'
+
 
 #This section configures this application to act as a client, for example to query solr via adsws
 CLIENT = {
