@@ -49,6 +49,7 @@ class WordCloud(Resource):
 
     solr_args['fields'] = ['id']
     solr_args['defType'] = 'aqp'
+    solr_args['tv'] = 'true'
     solr_args['tv.tf_idf'] = 'true'
     solr_args['tv.tf'] = 'true'
     solr_args['tv.positions'] ='false'
@@ -65,7 +66,6 @@ class WordCloud(Resource):
         return {"Error": "There was a connection error. Please try again later", "Error Info": response.text}, response.status_code
 
     if data:
-
         min_percent_word = request.args.get("min_percent_word", current_app.config.get("WC_MIN_PERCENT_WORD"))
         min_occurrences_word = request.args.get("min_occurrences_word", current_app.config.get("WC_MIN_OCCURRENCES_WORD"))
 
