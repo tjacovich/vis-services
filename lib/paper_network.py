@@ -101,7 +101,7 @@ def augment_graph_data(data, max_groups):
   #enhance the information that will be in the json handed off to d3
   for x in summary_graph.nodes():
     #size of each node is cumulative citations
-    summary_graph.node[x]["size"] = sum([G.node[paper].get("nodeWeight", 0) for paper in G.nodes() if G.node[paper]["group"] == x])
+    summary_graph.node[x]["size"] = sum([G.node[paper].get("citation_count", 0) for paper in G.nodes() if G.node[paper]["group"] == x])
 
     summary_graph.node[x]["total_reads"] = sum([G.node[paper].get("read_count", 0) for paper in G.nodes() if G.node[paper]["group"] == x])
 
