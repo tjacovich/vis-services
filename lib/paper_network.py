@@ -202,11 +202,14 @@ def get_papernetwork(solr_data, max_groups, weighted=True, equalization=False, d
     papers = reference_dictionary.keys()
     # Compile a unique list of cited papers
     ref_list = list(set([ref for sublist in reference_dictionary.values() for ref in sublist]))
+    # transform that list into a dictionary for fast lookup
+    ref_list = dict(zip(ref_list, range(len(ref_list))))
+    empty_vec = [0]*len(ref_list)
     # Construct the paper-citation occurence matrix R
     entries = []
     for p in papers:
-        vec = [0]*len(ref_list)
-        ref_ind = map(lambda a: ref_list.index(a), reference_dictionary[p])
+        vec = empty_vec[:]
+        ref_ind = map(lambda a: ref_list.get(a), reference_dictionary[p])
         for entry in ref_ind:
             vec[entry] = 1
         entries.append(vec)
