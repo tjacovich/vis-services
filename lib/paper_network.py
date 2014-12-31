@@ -197,8 +197,7 @@ def get_papernetwork(solr_data, max_groups, weighted=True, equalization=False, d
     number_of_papers = len(papers_list)
     # First construct the reference dictionary, and a unique list of cited papers
     reference_dictionary = _get_reference_mapping(solr_data)
-    # Construct a metadata dictionary
-    info_dictionary = _get_paper_data(solr_data)
+    
     # From now on we'll only work with publications that actually have references
     papers = reference_dictionary.keys()
     # Compile a unique list of cited papers
@@ -254,16 +253,21 @@ def get_papernetwork(solr_data, max_groups, weighted=True, equalization=False, d
         overlap = filter(lambda a: a in reference_dictionary[paper1], reference_dictionary[paper2])
         force = link_dict[link]
         links.append({'source':papers.index(paper1), 'target': papers.index(paper2), 'value':force, 'overlap':overlap})
+    
+    
     # Compile node information
+    selected_papers = {}.fromkeys(papers)
     nodes = []
-    for paper in papers:
-        nodes.append({'nodeName':paper, 
-                      'nodeWeight':info_dictionary[paper].get('citation_count',1),
-                      'citation_count':info_dictionary[paper].get('citation_count',0),
-                      'read_count':info_dictionary[paper].get('read_count',0),
-                      'title':info_dictionary[paper].get('title','NA')[0],
-                      'year':info_dictionary[paper].get('year','NA'),
-                      'first_author':info_dictionary[paper].get('first_author','NA')
+    for paper in solr_data:
+        if paper['bibcode'] not in selected_papers:
+            continue
+        nodes.append({'nodeName':paper['bibcode'], 
+                      'nodeWeight':paper.get('citation_count',1),
+                      'citation_count':paper.get('citation_count',0),
+                      'read_count':paper.get('read_count',0),
+                      'title':paper.get('title','NA')[0],
+                      'year':paper.get('year','NA'),
+                      'first_author':paper.get('first_author','NA')
                   })
     # That's all folks!
     paper_network = {'nodes': nodes, 'links': links}
