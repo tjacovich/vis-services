@@ -13,7 +13,8 @@ import histeq
 from numpy import mat
 from numpy import zeros
 from numpy import fill_diagonal
-from numpy import sqrt
+from numpy import sqrt, ones, multiply
+import numpy
 
 import networkx as nx
 import community
@@ -220,11 +221,21 @@ def get_papernetwork(solr_data, max_groups, weighted=True, equalization=False, d
     R = mat(entries).T
     # Contruct the weights matrix, in case we are working with normalized strengths
     if weighted:
+        lpl = float(len(papers_list))
         weights = []
-        for row in R.tolist():
-            weight = float(sum(row)/float(len(papers_list)))
-            weights.append(map(lambda a: a*weight, row))
-        W = mat(weights)
+        for row in R:
+            weights.append(numpy.array(row) * ((row * row.T / lpl).item()))
+        W = numpy.concatenate(weights)
+        
+        # Note for Edwin, weight elements are suspiciously uniform (does the wighting even have any sense?)
+        # they are always filled with 1s - so onen could accomplish the same (on line 214) by doing 1/len(papers)
+        
+        # this is just an attempt to do it using numpy parallelism, it was actually awfully slow :) maybe you see way to improve it? 
+        #diagonal = (R * R.T).diagonal() # these are the weights, because dot product will sum ones (and ignore zeroes)
+        #diagonal = diagonal / float(len(papers_list)) # now apply weight
+        #weights = diagonal.T * ones(R.shape[1]) # matrix of weights; is there some better way to construct it from the diagonal?
+        #W = multiply(R, weights) # now apply weights onto the matrix
+        
     else:
         W = zeros(shape=R.shape)
     # Now construct the co-occurence matrix
