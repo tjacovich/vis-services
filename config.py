@@ -14,7 +14,7 @@ CLIENT = {
 
 #word cloud config
 
-WC_MAX_RECORDS = 100
+WC_MAX_RECORDS = 500
 WC_START = 0
 
 #threshold that a word stem has to pass before being included
