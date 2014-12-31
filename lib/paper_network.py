@@ -34,7 +34,7 @@ def _get_reference_mapping(data):
     refdict = {}
     for doc in data:
         if 'reference' in doc:
-            refdict[doc['bibcode']] = doc['reference']
+            refdict[doc['bibcode']] = set(doc['reference'])
     return refdict
 
 def _get_paper_data(data):
@@ -225,7 +225,10 @@ def get_papernetwork(solr_data, max_groups, weighted=True, equalization=False, d
         weights = []
         for row in R:
             weights.append(numpy.array(row) * ((row * row.T / lpl).item()))
-        W = numpy.concatenate(weights)
+        if (len(weights) < 2):
+            W = zeros(shape=R.shape)
+        else:
+            W = numpy.concatenate(weights)
         
         # Note for Edwin, weight elements are suspiciously uniform (does the wighting even have any sense?)
         # they are always filled with 1s - so onen could accomplish the same (on line 214) by doing 1/len(papers)
@@ -269,7 +272,7 @@ def get_papernetwork(solr_data, max_groups, weighted=True, equalization=False, d
     # Now contruct the list of links
     for link in link_dict:
         paper1,paper2 = link.split('\t')
-        overlap = filter(lambda a: a in reference_dictionary[paper1], reference_dictionary[paper2])
+        overlap = reference_dictionary[paper1].intersection(reference_dictionary[paper2])
         force = link_dict[link]
         links.append({'source':ref_papers.get(paper1), 'target': ref_papers.get(paper2), 'value':force, 'overlap':overlap})
     
