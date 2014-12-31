@@ -213,6 +213,10 @@ def get_papernetwork(solr_data, max_groups, weighted=True, equalization=False, d
         for entry in ref_ind:
             vec[entry] = 1
         entries.append(vec)
+    
+    #done with ref_list
+    ref_list = None
+    
     R = mat(entries).T
     # Contruct the weights matrix, in case we are working with normalized strengths
     if weighted:
@@ -234,11 +238,12 @@ def get_papernetwork(solr_data, max_groups, weighted=True, equalization=False, d
     # Don't forget that this is a symmetrical relationship and the diagonal is irrelevant, 
     # so we will only iterate over the upper diagonal. Seems like this could be pulled in
     # the generation of W (above)
+    ref_papers = dict(zip(papers, range(len(papers))))
     Npapers = len(papers)
     for i in range(Npapers):
         for j in range(i+1,Npapers):
             scale = sqrt(len(reference_dictionary[papers[i]])*len(reference_dictionary[papers[j]]))
-            force = 100*C[papers.index(papers[i]),papers.index(papers[j])] / scale
+            force = 100*C[ref_papers.get(papers[i]),ref_papers.get(papers[j])] / scale
             if force > 0:
                 link_dict["%s\t%s"%(papers[i],papers[j])] = int(round(force))
                 link_dict["%s\t%s"%(papers[j],papers[i])] = int(round(force))
@@ -255,7 +260,7 @@ def get_papernetwork(solr_data, max_groups, weighted=True, equalization=False, d
         paper1,paper2 = link.split('\t')
         overlap = filter(lambda a: a in reference_dictionary[paper1], reference_dictionary[paper2])
         force = link_dict[link]
-        links.append({'source':papers.index(paper1), 'target': papers.index(paper2), 'value':force, 'overlap':overlap})
+        links.append({'source':ref_papers.get(paper1), 'target': ref_papers.get(paper2), 'value':force, 'overlap':overlap})
     
     
     # Compile node information
