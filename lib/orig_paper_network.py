@@ -13,8 +13,7 @@ import histeq
 from numpy import mat
 from numpy import zeros
 from numpy import fill_diagonal
-from numpy import sqrt, ones, multiply, array
-import numpy
+from numpy import sqrt
 
 import networkx as nx
 import community
@@ -34,7 +33,7 @@ def _get_reference_mapping(data):
     refdict = {}
     for doc in data:
         if 'reference' in doc:
-            refdict[doc['bibcode']] = set(doc['reference'])
+            refdict[doc['bibcode']] = doc['reference']
     return refdict
 
 def _get_paper_data(data):
@@ -174,7 +173,6 @@ def augment_graph_data(data, max_groups):
   
   return final_data
 
-
 # Main machinery
 def get_papernetwork(solr_data, max_groups, weighted=True, equalization=False, do_cutoff=False):
     '''
@@ -198,47 +196,28 @@ def get_papernetwork(solr_data, max_groups, weighted=True, equalization=False, d
     number_of_papers = len(papers_list)
     # First construct the reference dictionary, and a unique list of cited papers
     reference_dictionary = _get_reference_mapping(solr_data)
-    
+    # Construct a metadata dictionary
+    info_dictionary = _get_paper_data(solr_data)
     # From now on we'll only work with publications that actually have references
     papers = reference_dictionary.keys()
     # Compile a unique list of cited papers
     ref_list = list(set([ref for sublist in reference_dictionary.values() for ref in sublist]))
-    # transform that list into a dictionary for fast lookup
-    ref_list = dict(zip(ref_list, range(len(ref_list))))
-    empty_vec = [0]*len(ref_list)
     # Construct the paper-citation occurence matrix R
     entries = []
     for p in papers:
-        vec = empty_vec[:]
-        ref_ind = map(lambda a: ref_list.get(a), reference_dictionary[p])
+        vec = [0]*len(ref_list)
+        ref_ind = map(lambda a: ref_list.index(a), reference_dictionary[p])
         for entry in ref_ind:
             vec[entry] = 1
         entries.append(vec)
-    
-    #done with ref_list
-    ref_list = None
-    
     R = mat(entries).T
     # Contruct the weights matrix, in case we are working with normalized strengths
     if weighted:
-        lpl = float(len(papers_list))
         weights = []
-        for row in R:
-            weights.append(array(row) * ((row * row.T / lpl).item()))
-        if (len(weights) < 2):
-            W = zeros(shape=R.shape)
-        else:
-            W = numpy.concatenate(weights)
-        
-        # Note for Edwin, weight elements are suspiciously uniform (does the wighting even have any sense?)
-        # they are always filled with 1s - so onen could accomplish the same (on line 214) by doing 1/len(papers)
-        
-        # this is just an attempt to do it using numpy parallelism, it was actually awfully slow :) maybe you see way to improve it? 
-        #diagonal = (R * R.T).diagonal() # these are the weights, because dot product will sum ones (and ignore zeroes)
-        #diagonal = diagonal / float(len(papers_list)) # now apply weight
-        #weights = diagonal.T * ones(R.shape[1]) # matrix of weights; is there some better way to construct it from the diagonal?
-        #W = multiply(R, weights) # now apply weights onto the matrix
-        
+        for row in R.tolist():
+            weight = float(sum(row)/float(len(papers_list)))
+            weights.append(map(lambda a: a*weight, row))
+        W = mat(weights)
     else:
         W = zeros(shape=R.shape)
     # Now construct the co-occurence matrix
@@ -252,12 +231,11 @@ def get_papernetwork(solr_data, max_groups, weighted=True, equalization=False, d
     # Don't forget that this is a symmetrical relationship and the diagonal is irrelevant, 
     # so we will only iterate over the upper diagonal. Seems like this could be pulled in
     # the generation of W (above)
-    ref_papers = dict(zip(papers, range(len(papers))))
     Npapers = len(papers)
     for i in range(Npapers):
         for j in range(i+1,Npapers):
             scale = sqrt(len(reference_dictionary[papers[i]])*len(reference_dictionary[papers[j]]))
-            force = 100*C[ref_papers.get(papers[i]),ref_papers.get(papers[j])] / scale
+            force = 100*C[papers.index(papers[i]),papers.index(papers[j])] / scale
             if force > 0:
                 link_dict["%s\t%s"%(papers[i],papers[j])] = int(round(force))
                 link_dict["%s\t%s"%(papers[j],papers[i])] = int(round(force))
@@ -272,24 +250,19 @@ def get_papernetwork(solr_data, max_groups, weighted=True, equalization=False, d
     # Now contruct the list of links
     for link in link_dict:
         paper1,paper2 = link.split('\t')
-        overlap = reference_dictionary[paper1].intersection(reference_dictionary[paper2])
+        overlap = filter(lambda a: a in reference_dictionary[paper1], reference_dictionary[paper2])
         force = link_dict[link]
-        links.append({'source':ref_papers.get(paper1), 'target': ref_papers.get(paper2), 'value':force, 'overlap':overlap})
-    
-    
+        links.append({'source':papers.index(paper1), 'target': papers.index(paper2), 'value':force, 'overlap':overlap})
     # Compile node information
-    selected_papers = {}.fromkeys(papers)
     nodes = []
-    for paper in solr_data:
-        if paper['bibcode'] not in selected_papers:
-            continue
-        nodes.append({'nodeName':paper['bibcode'], 
-                      'nodeWeight':paper.get('citation_count',1),
-                      'citation_count':paper.get('citation_count',0),
-                      'read_count':paper.get('read_count',0),
-                      'title':paper.get('title','NA')[0],
-                      'year':paper.get('year','NA'),
-                      'first_author':paper.get('first_author','NA')
+    for paper in papers:
+        nodes.append({'nodeName':paper, 
+                      'nodeWeight':info_dictionary[paper].get('citation_count',1),
+                      'citation_count':info_dictionary[paper].get('citation_count',0),
+                      'read_count':info_dictionary[paper].get('read_count',0),
+                      'title':info_dictionary[paper].get('title','NA')[0],
+                      'year':info_dictionary[paper].get('year','NA'),
+                      'first_author':info_dictionary[paper].get('first_author','NA')
                   })
     # That's all folks!
     paper_network = {'nodes': nodes, 'links': links}
