@@ -39,7 +39,7 @@ class Resources(Resource):
 
 class WordCloud(Resource):
   '''Returns collated tf/idf data for a solr query'''
-  scopes = ['oauth:api:search'] 
+  scopes = ['api:search'] 
   rate_limit = [1000,60*60*24]
 
   def get(self):
@@ -77,7 +77,7 @@ class WordCloud(Resource):
 
 class AuthorNetwork(Resource):
   '''Returns author network data for a solr query'''
-  scopes = ['oauth:api:search'] 
+  scopes = ['api:search'] 
   rate_limit = [1000,60*60*24]
 
   def get(self):
@@ -108,7 +108,7 @@ class AuthorNetwork(Resource):
 
 class PaperNetwork(Resource):
   '''Returns paper network data for a solr query'''
-  scopes = ['oauth:api:search'] 
+  scopes = ['api:search'] 
   rate_limit = [1000,60*60*24] 
 
   def get(self):
