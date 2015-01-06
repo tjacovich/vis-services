@@ -101,11 +101,17 @@ def build_dict(tf_idf_info, text_info):
     abstract_info = all_data.get("abstract", {})
     title_info = all_data.get("title", {})
 
-    abstract_text = [t for t in text_info if t["id"] == _id][0].get("abstract", "").lower()
+    #text data template
+    text_data = { "id": "", "title" : [""], "abstract" : ""} 
+
+    #now, update template with the actual data from solr
+    text_data.update([t for t in text_info if t["id"] == _id][0])
+
+    abstract_text = text_data["abstract"].lower()
     abstract_text = collapse_regex.sub("-", abstract_text)
     abstract_text = split_regex.split(abstract_text)
 
-    title_text = [t for t in text_info if t["id"] == _id][0].get("title", [])[0].lower()
+    title_text = text_data["title"][0].lower()
     title_text = collapse_regex.sub("-", title_text)
     title_text = split_regex.split(title_text)
 
@@ -207,17 +213,20 @@ def combine_and_process_dicts(token_freq_dict, acr_freq_dict, num_records=1, min
   temp_dict = {}
 
   for a in acr_freq_dict:
-#       deleting lower case tokens, which are duplicated by the tokenizer
-#       if there are extra tokens that were not acronyms, they'll be lost, but it's worth it to simplify
-#       the returned dictionary
-    small_a = a.lower()
-    if small_a in token_freq_dict:
-      del token_freq_dict[small_a]
-
     record_count = len(set(acr_freq_dict[a]["record_count"]))
-   
     total_occurrences = acr_freq_dict[a]['total_occurrences']
-
+    
+    #need to find a better solution
+    # #keep from duplicating lower case and acronyms -- this is redundant because of the 
+    # #way the tokenizer works.
+    # small_a = a.lower()
+    # if small_a in token_freq_dict and total_occurrences > token_freq_dict[small_a]["total_occurrences"]:
+    #   del token_freq_dict[small_a]
+    # #the regular form of the word has more occurrences, so choose that instead
+    # #and break out of this loop
+    # elif small_a in token_freq_dict:
+    #     continue
+        
     if record_count/num_records * 100 >= min_percent_word and total_occurrences >= min_occurrences_word:
 
       idf = sum(acr_freq_dict[a]["idf"])/len(acr_freq_dict[a]["idf"])

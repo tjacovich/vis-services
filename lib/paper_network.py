@@ -83,7 +83,7 @@ def augment_graph_data(data, max_groups):
     G.add_node(i, nodeName= x["nodeName"], nodeWeight = x["nodeWeight"], title=x["title"], citation_count=x["citation_count"], first_author = x["first_author"], read_count = x["read_count"])
 
   for i,x in enumerate(data['links']):
-    G.add_edge(x["source"], x["target"], weight = x["value"], overlap = x["overlap"])
+    G.add_edge(x["source"], x["target"], weight = x["value"], overlap = list(x["overlap"]))
    
   all_nodes = G.nodes()
   
@@ -150,6 +150,7 @@ def augment_graph_data(data, max_groups):
                     references[bib].update([paper_one, paper_two])
                 else:
                     references[bib] = set([paper_one, paper_two])
+    
 
     count_references = sorted(references.items(), key=lambda x:len(x[1]), reverse = True)[:5]
     top_common_references = [(tup[0], float("{0:.2f}".format(len(tup[1])/num_papers))) for tup in count_references]
