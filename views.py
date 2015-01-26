@@ -17,8 +17,8 @@ blueprint = Blueprint(
 #This resource must be available for every adsabs webservice.
 class Resources(Resource):
   '''Overview of available resources'''
-  scopes = []
-  rate_limit = [1000,60*60*24]
+  scopes = ['ads:default']
+  rate_limit = [500,60*60*24]
   def get(self):
     func_list = {}
 
@@ -39,8 +39,8 @@ class Resources(Resource):
 
 class WordCloud(Resource):
   '''Returns collated tf/idf data for a solr query'''
-  scopes = ['api:search'] 
-  rate_limit = [1000,60*60*24]
+  scopes = ['ads:default'] 
+  rate_limit = [500,60*60*24]
 
   def get(self):
 
@@ -77,8 +77,8 @@ class WordCloud(Resource):
 
 class AuthorNetwork(Resource):
   '''Returns author network data for a solr query'''
-  scopes = ['api:search'] 
-  rate_limit = [1000,60*60*24]
+  scopes = ['ads:default'] 
+  rate_limit = [500,60*60*24]
 
   def get(self):
 
@@ -108,8 +108,8 @@ class AuthorNetwork(Resource):
 
 class PaperNetwork(Resource):
   '''Returns paper network data for a solr query'''
-  scopes = ['api:search'] 
-  rate_limit = [1000,60*60*24] 
+  scopes = ['ads:default'] 
+  rate_limit = [500,60*60*24] 
 
   def get(self):
 
