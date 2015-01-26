@@ -1,3 +1,5 @@
+[![Build Status](https://travis-ci.org/adsabs/vis-services.svg?branch=master)](https://travis-ci.org/adsabs/vis-services)
+
 # Visualization Endpoints for ADS
 
 ### Author Network
