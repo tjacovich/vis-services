@@ -57,7 +57,7 @@ class WordCloud(Resource):
     solr_args['fl'] ='id,abstract,title'
     solr_args['wt'] = 'json' 
 
-    headers = {'Authorization' : request.headers.get('Authorization')}
+    headers = {'X-Forwarded-Authorization' : request.headers.get('Authorization')}
 
     response = current_app.client.session.get(current_app.config.get("TVRH_SOLR_PATH") , params = solr_args, headers=headers)
 
@@ -89,7 +89,7 @@ class AuthorNetwork(Resource):
     solr_args['fl'] = ['author_norm', 'title', 'citation_count', 'read_count','bibcode', 'pubdate']
     solr_args['wt'] ='json'
 
-    headers = {'Authorization' : request.headers.get('Authorization')}
+    headers = {'X-Forwarded-Authorization' : request.headers.get('Authorization')}
 
     response = current_app.client.session.get(current_app.config.get("SOLR_PATH") , params = solr_args, headers=headers)
 
@@ -124,10 +124,7 @@ class PaperNetwork(Resource):
     solr_args['fl'] = ['bibcode,title,first_author,year,citation_count,read_count,reference']
     solr_args['wt'] ='json'
 
-    headers = {'Authorization' : request.headers.get('Authorization')}
-
-    print headers
-    return
+    headers = {'X-Forwarded-Authorization' : request.headers.get('Authorization')}
 
     response = current_app.client.session.get(current_app.config.get("SOLR_PATH") , params = solr_args, headers=headers)
 
