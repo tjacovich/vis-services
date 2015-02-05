@@ -45,8 +45,7 @@ class WordCloud(Resource):
   def get(self):
 
     solr_args = {k : v for k, v in request.args.items() if k not in ["min_percent_word", "min_occurrences_word"]}
-    solr_args["rows"] = min(solr_args.get("rows", current_app.config.get("WC_MAX_RECORDS")), current_app.config.get("WC_MAX_RECORDS"))
-
+    solr_args["rows"] = min(int(solr_args.get("rows", current_app.config.get("WC_MAX_RECORDS"))), current_app.config.get("WC_MAX_RECORDS"))
     solr_args['fields'] = ['id']
     solr_args['defType'] = 'aqp'
     solr_args['tv'] = 'true'
@@ -58,8 +57,10 @@ class WordCloud(Resource):
     solr_args['fl'] ='id,abstract,title'
     solr_args['wt'] = 'json' 
 
-    response = current_app.client.session.get(current_app.config.get("TVRH_SOLR_PATH") , params = solr_args)
-    
+    headers = {'Authorization' : request.headers.get('Authorization')}
+
+    response = current_app.client.session.get(current_app.config.get("TVRH_SOLR_PATH") , params = solr_args, headers=headers)
+
     if response.status_code == 200:
         data = response.json()
     else:
@@ -85,11 +86,12 @@ class AuthorNetwork(Resource):
     solr_args = {k : v for k,v in request.args.items()}
 
     solr_args["rows"] = min(int(solr_args.get("rows", current_app.config.get("AN_MAX_RECORDS"))), current_app.config.get("AN_MAX_RECORDS"))
-
     solr_args['fl'] = ['author_norm', 'title', 'citation_count', 'read_count','bibcode', 'pubdate']
     solr_args['wt'] ='json'
 
-    response = current_app.client.session.get(current_app.config.get("SOLR_PATH") , params = solr_args)
+    headers = {'Authorization' : request.headers.get('Authorization')}
+
+    response = current_app.client.session.get(current_app.config.get("SOLR_PATH") , params = solr_args, headers=headers)
 
     if response.status_code == 200:
       full_response = response.json()
@@ -122,7 +124,12 @@ class PaperNetwork(Resource):
     solr_args['fl'] = ['bibcode,title,first_author,year,citation_count,read_count,reference']
     solr_args['wt'] ='json'
 
-    response = current_app.client.session.get(current_app.config.get("SOLR_PATH") , params = solr_args)
+    headers = {'Authorization' : request.headers.get('Authorization')}
+
+    print headers
+    return
+
+    response = current_app.client.session.get(current_app.config.get("SOLR_PATH") , params = solr_args, headers=headers)
 
     if response.status_code == 200:
       full_response = response.json()
@@ -140,8 +147,4 @@ class PaperNetwork(Resource):
        }, "data" : paper_network_json}, 200
     else:
       return {"Error": "Empty network."}, 200
-
-
-
-
 
