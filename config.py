@@ -1,13 +1,13 @@
 SECRET_KEY = 'this should be changed'
 
-SOLR_PATH = 'http://0.0.0.0:9000/solr/select'
+SOLR_PATH = 'http://adsws-staging.elasticbeanstalk.com/v1/search/query'
 
 TVRH_SOLR_PATH = 'http://0.0.0.0:9000/solr/tvrh/'
 
 
 #This section configures this application to act as a client, for example to query solr via adsws
 CLIENT = {
-  'TOKEN': 'we will provide an api key token for this application'
+  'TOKEN': 'XkaQXNis2HsRp92YPG9my6A1wsEXqO8C3u9zrL8v'
 }
 
 
