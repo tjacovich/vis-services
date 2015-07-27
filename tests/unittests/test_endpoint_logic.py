@@ -6,8 +6,6 @@ PROJECT_HOME = os.path.abspath(os.path.join(os.path.dirname(__file__),'../../'))
 sys.path.append(PROJECT_HOME)
 from lib import author_network, word_cloud, paper_network, tf_idf
 
-import config
-
 
 #input data
 
@@ -219,17 +217,3 @@ class TestEndpointLogic(unittest.TestCase):
 
     processed_data = json.loads(json.dumps(paper_network.get_papernetwork(input_js_paper_network["response"]["docs"], 10), sort_keys=True))
     self.assertEqual(processed_data, test_js_paper_network)
-
-
-
-
-
-
-
-
-  
-
-
-
-if __name__ == '__main__':
-  unittest.main()
