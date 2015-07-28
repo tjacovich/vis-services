@@ -1,45 +1,16 @@
-from flask import current_app, Blueprint, jsonify, request
+from flask import current_app, request
 from flask.ext.restful import Resource, reqparse
-import inspect
-import sys
+from flask.ext.discoverer import advertise
 from lib import word_cloud
 from lib import author_network
 from lib import paper_network
-
-
-
-blueprint = Blueprint(
-    'visualization',
-    __name__,
-    static_folder=None,
-)
-
-#This resource must be available for every adsabs webservice.
-class Resources(Resource):
-  '''Overview of available resources'''
-  scopes = []
-  rate_limit = [500,60*60*24]
-  def get(self):
-    func_list = {}
-
-    clsmembers = [i[1] for i in inspect.getmembers(sys.modules[__name__], inspect.isclass)]
-    for rule in current_app.url_map.iter_rules():
-      f = current_app.view_functions[rule.endpoint]
-      #If we load this webservice as a module, we can't guarantee that current_app only has these views
-      if not hasattr(f,'view_class') or f.view_class not in clsmembers:
-        continue
-      methods = f.view_class.methods
-      scopes = f.view_class.scopes
-      rate_limit = f.view_class.rate_limit
-      description = f.view_class.__doc__
-      func_list[rule.rule] = {'methods':methods,'scopes': scopes,'description': description,'rate_limit':rate_limit}
-    return func_list, 200
-
+from client import client
 
 
 class WordCloud(Resource):
   '''Returns collated tf/idf data for a solr query'''
-  scopes = [] 
+  decorators = [advertise('scopes', 'rate_limit')]
+  scopes = []
   rate_limit = [500,60*60*24]
 
   def get(self):
@@ -49,8 +20,8 @@ class WordCloud(Resource):
         del solr_args['min_percent_word']
     if 'min_occurrences_word' in solr_args:
         del solr_args['min_occurrences_word']
-        
-    solr_args["rows"] = min(int(solr_args.get("rows", [current_app.config.get("WC_MAX_RECORDS")])[0]), current_app.config.get("WC_MAX_RECORDS"))
+
+    solr_args["rows"] = min(int(solr_args.get("rows", [current_app.config.get("VIS_SERVICE_WC_MAX_RECORDS")])[0]), current_app.config.get("VIS_SERVICE_WC_MAX_RECORDS"))
     solr_args['fields'] = ['id']
     solr_args['defType'] = 'aqp'
     solr_args['tv'] = 'true'
@@ -60,11 +31,11 @@ class WordCloud(Resource):
     solr_args['tf.offsets'] = 'false'
     solr_args['tv.fl'] ='abstract,title'
     solr_args['fl'] ='id,abstract,title'
-    solr_args['wt'] = 'json' 
+    solr_args['wt'] = 'json'
 
     headers = {'X-Forwarded-Authorization' : request.headers.get('Authorization')}
 
-    response = current_app.client.session.get(current_app.config.get("TVRH_SOLR_PATH") , params = solr_args, headers=headers)
+    response = client().get(current_app.config.get("VIS_SERVICE_TVRH_PATH") , params = solr_args, headers=headers)
 
     if response.status_code == 200:
         data = response.json()
@@ -72,8 +43,8 @@ class WordCloud(Resource):
         return {"Error": "There was a connection error. Please try again later", "Error Info": response.text}, response.status_code
 
     if data:
-        min_percent_word = request.args.get("min_percent_word", current_app.config.get("WC_MIN_PERCENT_WORD"))
-        min_occurrences_word = request.args.get("min_occurrences_word", current_app.config.get("WC_MIN_OCCURRENCES_WORD"))
+        min_percent_word = request.args.get("min_percent_word", current_app.config.get("VIS_SERVICE_WC_MIN_PERCENT_WORD"))
+        min_occurrences_word = request.args.get("min_occurrences_word", current_app.config.get("VIS_SERVICE_WC_MIN_OCCURRENCES_WORD"))
 
         word_cloud_json = word_cloud.generate_wordcloud(data, min_percent_word = min_percent_word, min_occurrences_word = min_occurrences_word)
     if word_cloud_json:
@@ -83,20 +54,21 @@ class WordCloud(Resource):
 
 class AuthorNetwork(Resource):
   '''Returns author network data for a solr query'''
-  scopes = [] 
+  decorators = [advertise('scopes', 'rate_limit')]
+  scopes = []
   rate_limit = [500,60*60*24]
 
   def get(self):
 
     solr_args = dict(request.args)
 
-    solr_args["rows"] = min(int(solr_args.get("rows", [current_app.config.get("AN_MAX_RECORDS")])[0]), current_app.config.get("AN_MAX_RECORDS"))
+    solr_args["rows"] = min(int(solr_args.get("rows", [current_app.config.get("VIS_SERVICE_AN_MAX_RECORDS")])[0]), current_app.config.get("VIS_SERVICE_AN_MAX_RECORDS"))
     solr_args['fl'] = ['author_norm', 'title', 'citation_count', 'read_count','bibcode', 'pubdate']
     solr_args['wt'] ='json'
 
     headers = {'X-Forwarded-Authorization' : request.headers.get('Authorization')}
 
-    response = current_app.client.session.get(current_app.config.get("SOLR_PATH") , params = solr_args, headers=headers)
+    response = client().get(current_app.config.get("VIS_SERVICE_SOLR_PATH") , params = solr_args, headers=headers)
 
     if response.status_code == 200:
       full_response = response.json()
@@ -118,23 +90,24 @@ class AuthorNetwork(Resource):
 
 class PaperNetwork(Resource):
   '''Returns paper network data for a solr query'''
-  scopes = [] 
-  rate_limit = [500,60*60*24] 
+  decorators = [advertise('scopes', 'rate_limit')]
+  scopes = []
+  rate_limit = [500,60*60*24]
 
   def get(self):
 
     solr_args = dict(request.args)
     if 'max_groups' in solr_args:
         del solr_args['max_groups']
-    
-    solr_args["rows"] = min(int(solr_args.get("rows", [current_app.config.get("PN_MAX_RECORDS")])[0]), current_app.config.get("PN_MAX_RECORDS"))
+
+    solr_args["rows"] = min(int(solr_args.get("rows", [current_app.config.get("VIS_SERVICE_PN_MAX_RECORDS")])[0]), current_app.config.get("VIS_SERVICE_PN_MAX_RECORDS"))
 
     solr_args['fl'] = ['bibcode,title,first_author,year,citation_count,read_count,reference']
     solr_args['wt'] ='json'
 
     headers = {'X-Forwarded-Authorization' : request.headers.get('Authorization')}
 
-    response = current_app.client.session.get(current_app.config.get("SOLR_PATH") , params = solr_args, headers=headers)
+    response = client().get(current_app.config.get("VIS_SERVICE_SOLR_PATH") , params = solr_args, headers=headers)
 
     if response.status_code == 200:
       full_response = response.json()
@@ -144,7 +117,7 @@ class PaperNetwork(Resource):
 
     #get_network_with_groups expects a list of normalized authors
     data = full_response["response"]["docs"]
-    paper_network_json = paper_network.get_papernetwork(data, request.args.get("max_groups", current_app.config.get("PN_MAX_GROUPS")))
+    paper_network_json = paper_network.get_papernetwork(data, request.args.get("max_groups", current_app.config.get("VIS_SERVICE_PN_MAX_GROUPS")))
     if paper_network_json:
       return {"msg" : {"numFound" : full_response["response"]["numFound"],
        "start": full_response["response"].get("start", 0),
