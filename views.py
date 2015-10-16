@@ -13,9 +13,9 @@ class WordCloud(Resource):
   scopes = []
   rate_limit = [500,60*60*24]
 
-  def get(self):
+  def post(self):
 
-    solr_args = dict(request.args)
+    solr_args = request.json
     if 'max_groups' in solr_args:
         del solr_args['min_percent_word']
     if 'min_occurrences_word' in solr_args:
@@ -58,9 +58,9 @@ class AuthorNetwork(Resource):
   scopes = []
   rate_limit = [500,60*60*24]
 
-  def get(self):
+  def post(self):
 
-    solr_args = dict(request.args)
+    solr_args = request.json
 
     solr_args["rows"] = min(int(solr_args.get("rows", [current_app.config.get("VIS_SERVICE_AN_MAX_RECORDS")])[0]), current_app.config.get("VIS_SERVICE_AN_MAX_RECORDS"))
     solr_args['fl'] = ['author_norm', 'title', 'citation_count', 'read_count','bibcode', 'pubdate']
@@ -94,9 +94,9 @@ class PaperNetwork(Resource):
   scopes = []
   rate_limit = [500,60*60*24]
 
-  def get(self):
+  def post(self):
 
-    solr_args = dict(request.args)
+    solr_args = dict(request.json)
     if 'max_groups' in solr_args:
         del solr_args['max_groups']
 
@@ -125,4 +125,3 @@ class PaperNetwork(Resource):
        }, "data" : paper_network_json}, 200
     else:
       return {"Error": "Empty network."}, 200
-
