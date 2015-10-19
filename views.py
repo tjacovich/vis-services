@@ -6,6 +6,55 @@ from lib import author_network
 from lib import paper_network
 from client import client
 
+# the function make_request is used for paper and author network,
+# to get a solr response from the query or bibcodes parameter
+# provided by the user
+
+class QueryException(Exception):
+    pass
+
+def make_request(request, service_string, required_fields):
+    bibcodes = []
+    query = None
+
+    if 'bibcodes' in request.json:
+        if 'query' in request.json and request.json['query']:
+            raise QueryException('Cannot send both bibcodes and query')
+
+        bibcodes = map(str, request.json['bibcodes'])
+
+        if len(bibcodes) > current_app.config.get("VIS_SERVICE_" + service_string + "_MAX_RECORDS"):
+            raise QueryException('No results: number of submitted bibcodes exceeds maximum number')
+
+        elif len(bibcodes) == 0:
+            raise QueryException('No bibcodes found in POST body')
+
+        #we have bibcodes, which might be up to 1000 ( too long for solr using GET),
+        #so use bigquery
+        headers = {'X-Forwarded-Authorization' : request.headers.get('Authorization')}
+        big_query_params = {'q':'*:*', 'wt':'json', 'fl': required_fields, 'fq': '{!bitset}', 'rows' : len(bibcodes)}
+
+        response = client().post( current_app.config.get("VIS_SERVICE_BIGQUERY_PATH"),
+                                  params = big_query_params,
+                                  headers = headers,
+                                  data = 'bibcode\n' + '\n'.join(bibcodes)
+                                )
+        return response
+
+    elif 'query' in request.json:
+        solr_args = request.json
+        solr_args["rows"] = min(int(solr_args.get("rows", [current_app.config.get("VIS_SERVICE_AN_MAX_RECORDS")])[0]), current_app.config.get("VIS_SERVICE_AN_MAX_RECORDS"))
+        solr_args['fl'] = required_fields
+        solr_args['wt'] ='json'
+        headers = {'X-Forwarded-Authorization' : request.headers.get('Authorization')}
+
+        response = client().get(current_app.config.get("VIS_SERVICE_SOLR_PATH"), params = solr_args, headers = headers )
+        return response
+
+    else:
+        #neither bibcodes nor query were provided
+        raise QueryException('Nothing to calculate network!')
+
 
 class WordCloud(Resource):
   '''Returns collated tf/idf data for a solr query'''
@@ -60,28 +109,25 @@ class AuthorNetwork(Resource):
 
   def post(self):
 
-    solr_args = request.json
-
-    solr_args["rows"] = min(int(solr_args.get("rows", [current_app.config.get("VIS_SERVICE_AN_MAX_RECORDS")])[0]), current_app.config.get("VIS_SERVICE_AN_MAX_RECORDS"))
-    solr_args['fl'] = ['author_norm', 'title', 'citation_count', 'read_count','bibcode', 'pubdate']
-    solr_args['wt'] ='json'
-
-    headers = {'X-Forwarded-Authorization' : request.headers.get('Authorization')}
-
-    response = client().get(current_app.config.get("VIS_SERVICE_SOLR_PATH") , params = solr_args, headers=headers)
+    try:
+        required_fields = ['author_norm', 'title', 'citation_count', 'read_count','bibcode', 'pubdate']
+        response = make_request(request, "AN", required_fields)
+    except QueryException as error:
+        return {'Error' : 'there was a problem with your request', 'Error Info': error}, 403
 
     if response.status_code == 200:
-      full_response = response.json()
+        full_response = response.json()
     else:
-      return {"Error": "There was a connection error. Please try again later", "Error Info": response.text}, response.status_code
+        return {"Error": "There was a connection error. Please try again later", "Error Info": response.text}, response.status_code
 
     #get_network_with_groups expects a list of normalized authors
     author_norm = [d.get("author_norm", []) for d in full_response["response"]["docs"]]
     author_network_json = author_network.get_network_with_groups(author_norm, full_response["response"]["docs"])
 
     if author_network_json:
-      return {"msg" : {"numFound" : full_response["response"]["numFound"],
-       "start": full_response["response"].get("start", 0),
+      return { "msg" :
+      { "numFound" : full_response["response"]["numFound"],
+        "start": full_response["response"].get("start", 0),
         "rows": int(full_response["responseHeader"]["params"]["rows"])
        }, "data" : author_network_json}, 200
     else:
@@ -96,32 +142,26 @@ class PaperNetwork(Resource):
 
   def post(self):
 
-    solr_args = dict(request.json)
-    if 'max_groups' in solr_args:
-        del solr_args['max_groups']
-
-    solr_args["rows"] = min(int(solr_args.get("rows", [current_app.config.get("VIS_SERVICE_PN_MAX_RECORDS")])[0]), current_app.config.get("VIS_SERVICE_PN_MAX_RECORDS"))
-
-    solr_args['fl'] = ['bibcode,title,first_author,year,citation_count,read_count,reference']
-    solr_args['wt'] ='json'
-
-    headers = {'X-Forwarded-Authorization' : request.headers.get('Authorization')}
-
-    response = client().get(current_app.config.get("VIS_SERVICE_SOLR_PATH") , params = solr_args, headers=headers)
+    try:
+        required_fields = ['bibcode,title,first_author,year,citation_count,read_count,reference']
+        response = make_request(request, "PN", required_fields)
+    except QueryException as error:
+        return {'Error' : 'there was a problem with your request', 'Error Info': error}, 403
 
     if response.status_code == 200:
-      full_response = response.json()
-
+        full_response = response.json()
     else:
-      return {"Error": "There was a connection error. Please try again later", "Error Info": response.text}, response.status_code
+        return {"Error": "There was a connection error. Please try again later", "Error Info": response.text}, response.status_code
 
     #get_network_with_groups expects a list of normalized authors
     data = full_response["response"]["docs"]
     paper_network_json = paper_network.get_papernetwork(data, request.args.get("max_groups", current_app.config.get("VIS_SERVICE_PN_MAX_GROUPS")))
     if paper_network_json:
-      return {"msg" : {"numFound" : full_response["response"]["numFound"],
-       "start": full_response["response"].get("start", 0),
-        "rows": int(full_response["responseHeader"]["params"]["rows"])
-       }, "data" : paper_network_json}, 200
+      return { "msg" : {
+      "numFound" : full_response["response"]["numFound"],
+      "start": full_response["response"].get("start", 0),
+      "rows": int(full_response["responseHeader"]["params"]["rows"])
+       },
+       "data" : paper_network_json}, 200
     else:
       return {"Error": "Empty network."}, 200
