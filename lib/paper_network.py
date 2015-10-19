@@ -206,7 +206,6 @@ def get_papernetwork(solr_data, max_groups, weighted=True, equalization=False, d
     number_of_papers = len(papers_list)
     # First construct the reference dictionary, and a unique list of cited papers
     reference_dictionary = _get_reference_mapping(solr_data)
-    
     # From now on we'll only work with publications that actually have references
     papers = reference_dictionary.keys()
     # Compile a unique list of cited papers
@@ -222,12 +221,16 @@ def get_papernetwork(solr_data, max_groups, weighted=True, equalization=False, d
         for entry in ref_ind:
             vec[entry] = 1
         entries.append(vec)
-    
     #done with ref_list
     ref_list = None
-    
     R = mat(entries).T
     # Contruct the weights matrix, in case we are working with normalized strengths
+    # If the weight matrix seems uniform, it is coincidental. For example, do an author
+    # query for "Henneken, E" and print out W.torows() or, later, C.torows().
+    # Normalization has no influence on the frequency distribution of link strengths in
+    # dense networks, but for sparser networks it causes this distribution to be more
+    # sparse. Normalization has no noticable influence no performance, based on testing
+    # with J. Huchra as author.
     if weighted:
         lpl = float(len(papers_list))
         weights = []
@@ -237,21 +240,15 @@ def get_papernetwork(solr_data, max_groups, weighted=True, equalization=False, d
             W = zeros(shape=R.shape)
         else:
             W = numpy.concatenate(weights)
-        
-        # Note for Edwin, weight elements are suspiciously uniform (does the wighting even have any sense?)
-        # they are always filled with 1s - so onen could accomplish the same (on line 214) by doing 1/len(papers)
-        
-        # this is just an attempt to do it using numpy parallelism, it was actually awfully slow :) maybe you see way to improve it? 
-        #diagonal = (R * R.T).diagonal() # these are the weights, because dot product will sum ones (and ignore zeroes)
-        #diagonal = diagonal / float(len(papers_list)) # now apply weight
-        #weights = diagonal.T * ones(R.shape[1]) # matrix of weights; is there some better way to construct it from the diagonal?
-        #W = multiply(R, weights) # now apply weights onto the matrix
-        
+        # Done with weights
+        del weights
+        # Get the co-occurence matrix C
+        C = R.T*(R-W)
     else:
-        W = zeros(shape=R.shape)
-    # Now construct the co-occurence matrix
+        C = R.T*R       
+    # Done with R
+    del R
     # In practice we don't need to fill the diagonal with zeros, because we won't be using it
-    C = R.T*(R-W)
     fill_diagonal(C, 0)
     # Compile the list of links
     links = []
@@ -283,7 +280,6 @@ def get_papernetwork(solr_data, max_groups, weighted=True, equalization=False, d
         overlap = reference_dictionary[paper1].intersection(reference_dictionary[paper2])
         force = link_dict[link]
         links.append({'source':ref_papers.get(paper1), 'target': ref_papers.get(paper2), 'value':force, 'overlap':overlap})
-    
     # Compile node information
     selected_papers = {}.fromkeys(papers)
     #because the nodes must be inserted at the proper index
