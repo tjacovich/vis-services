@@ -1,9 +1,9 @@
-VIS_SERVICE_SOLR_PATH = 'http://adsws-staging.elasticbeanstalk.com/v1/search/query'
+VIS_SERVICE_BIGQUERY_PATH = 'http://ecs-staging-elb-2044121877.us-east-1.elb.amazonaws.com/v1/search/bigquery'
 
 VIS_SERVICE_TVRH_PATH = 'http://adsws-staging.elasticbeanstalk.com/v1/search/tvrh'
 
 #This section configures this application to act as a client, for example to query solr via adsws
-VIS_SERVICE_API_TOKEN = 'redacted'
+VIS_SERVICE_API_TOKEN = None
 
 #word cloud config
 VIS_SERVICE_WC_MAX_RECORDS = 500
@@ -28,4 +28,5 @@ VIS_SERVICE_PN_START = 0
 #configuration for augmented graph data
 VIS_SERVICE_PN_MAX_GROUPS = 10
 
-
+# DEBUG = True
+# TESTING = True
