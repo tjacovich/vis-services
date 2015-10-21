@@ -42,7 +42,7 @@ def make_request(request, service_string, required_fields):
         return response
 
     elif 'query' in request.json:
-        solr_args = request.json
+        solr_args = request.json["query"]
         solr_args["rows"] = min(int(solr_args.get("rows", [current_app.config.get("VIS_SERVICE_AN_MAX_RECORDS")])[0]), current_app.config.get("VIS_SERVICE_AN_MAX_RECORDS"))
         solr_args['fl'] = required_fields
         solr_args['wt'] ='json'
@@ -155,7 +155,7 @@ class PaperNetwork(Resource):
 
     #get_network_with_groups expects a list of normalized authors
     data = full_response["response"]["docs"]
-    paper_network_json = paper_network.get_papernetwork(data, request.args.get("max_groups", current_app.config.get("VIS_SERVICE_PN_MAX_GROUPS")))
+    paper_network_json = paper_network.get_papernetwork(data, request.json.get("max_groups", current_app.config.get("VIS_SERVICE_PN_MAX_GROUPS")))
     if paper_network_json:
       return { "msg" : {
       "numFound" : full_response["response"]["numFound"],
