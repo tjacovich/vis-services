@@ -1,6 +1,6 @@
 VIS_SERVICE_BIGQUERY_PATH = 'http://ecs-staging-elb-2044121877.us-east-1.elb.amazonaws.com/v1/search/bigquery'
-
-VIS_SERVICE_TVRH_PATH = 'http://adsws-staging.elasticbeanstalk.com/v1/search/tvrh'
+VIS_SERVICE_TVRH_PATH = 'http://ecs-staging-elb-2044121877.us-east-1.elb.amazonaws.com/v1/search/tvrh'
+VIS_SERVICE_SOLR_PATH = 'http://ecs-staging-elb-2044121877.us-east-1.elb.amazonaws.com/v1/search/query'
 
 #This section configures this application to act as a client, for example to query solr via adsws
 VIS_SERVICE_API_TOKEN = None
