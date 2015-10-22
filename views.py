@@ -5,10 +5,12 @@ from lib import word_cloud
 from lib import author_network
 from lib import paper_network
 from client import client
+import json
 
 # the function make_request is used for paper and author network,
 # to get a solr response from the query or bibcodes parameter
 # provided by the user
+# if a query is sent, it has to be double-encoded
 
 class QueryException(Exception):
     pass
@@ -41,8 +43,12 @@ def make_request(request, service_string, required_fields):
                                 )
         return response
 
+    #this shouldnt be advertised, it's there only as a convenience for Bumblebee
     elif 'query' in request.json:
-        solr_args = request.json["query"]
+        try:
+            solr_args = json.loads(request.json["query"][0])
+        except Exception:
+            raise QueryException('couldn\'t decode query, it should be json-encoded before being sent (so double encoded)')
         solr_args["rows"] = min(int(solr_args.get("rows", [current_app.config.get("VIS_SERVICE_AN_MAX_RECORDS")])[0]), current_app.config.get("VIS_SERVICE_AN_MAX_RECORDS"))
         solr_args['fl'] = required_fields
         solr_args['wt'] ='json'
@@ -65,10 +71,19 @@ class WordCloud(Resource):
   def post(self):
 
     solr_args = request.json
+    if not solr_args:
+        return {'Error' : 'there was a problem with your request', 'Error Info': 'no data provided with request'}, 403
+
     if 'max_groups' in solr_args:
         del solr_args['min_percent_word']
     if 'min_occurrences_word' in solr_args:
         del solr_args['min_occurrences_word']
+
+    elif 'query' in request.json:
+        try:
+            solr_args = json.loads(request.json["query"][0])
+        except Exception:
+            return {'Error' : 'there was a problem with your request', 'Error Info': 'couldn\'t decode query, it should be json-encoded before being sent (so double encoded)'}, 403
 
     solr_args["rows"] = min(int(solr_args.get("rows", [current_app.config.get("VIS_SERVICE_WC_MAX_RECORDS")])[0]), current_app.config.get("VIS_SERVICE_WC_MAX_RECORDS"))
     solr_args['fields'] = ['id']
