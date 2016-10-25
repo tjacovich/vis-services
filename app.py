@@ -4,6 +4,8 @@ from flask.ext.restful import Api
 from flask.ext.discoverer import Discoverer
 from flask.ext.consulate import Consul, ConsulConnectionError
 
+import logging.config
+
 def create_app():
     """Application factory"""
 
@@ -12,6 +14,7 @@ def create_app():
 
     Consul(app)  # load_config expects consul to be registered
     load_config(app)
+    logging.config.dictConfig(app.config['VIS_LOGGING'])
 
     Discoverer(app)
     api = Api(app)
