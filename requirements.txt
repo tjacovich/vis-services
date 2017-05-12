@@ -6,5 +6,5 @@ stemming==1.0.1
 networkx==1.9.1 
 python-louvain==0.3
 numpy
-flask-consulate
+flask-consulate==0.1.2
 flask-discoverer
