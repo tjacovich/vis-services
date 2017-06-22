@@ -1,4 +1,4 @@
-from flask.ext.testing import TestCase
+from flask_testing import TestCase
 import app
 
 class TestWebservices(TestCase):
