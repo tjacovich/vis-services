@@ -1,3 +1,5 @@
 *pyc
 local_config.py
 *~
+.coverage*
+venv

@@ -1,6 +1,6 @@
 from flask import current_app, request
-from flask.ext.restful import Resource, reqparse
-from flask.ext.discoverer import advertise
+from flask_restful import Resource, reqparse
+from flask_discoverer import advertise
 from lib import word_cloud
 from lib import author_network
 from lib import paper_network
