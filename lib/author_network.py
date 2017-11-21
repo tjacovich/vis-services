@@ -10,7 +10,7 @@ import networkx as nx
 import community
 import math
 from networkx.readwrite import json_graph
-from collections import defaultdict 
+from collections import defaultdict
 
 
 __all__ = ['generate_network']
@@ -37,9 +37,9 @@ def _get_author_weight(authors_in_paper):
     return 0
 
 def _remap_dict_in_range(mydict, newrange=[1, 100]):
-  """function that transform a dictionary 
+  """function that transform a dictionary
   in another with the values mapped in a defined range"""
-  
+
   def translate(value, leftMin, leftMax, rightMin, rightMax):
     """local function that maps a single value"""
     # Figure out how 'wide' each range is
@@ -51,17 +51,18 @@ def _remap_dict_in_range(mydict, newrange=[1, 100]):
     valueScaled = float(value - leftMin) / float(leftSpan)
     # Convert the 0-1 range into a value in the right range.
     return rightMin + (valueScaled * rightSpan)
-  #I extract the values from the dictionary
-  dict_values = mydict.values()
-  #and the max and min
-  minvalue = min(dict_values)
-  maxvalue = max(dict_values)
   #I define a new dictionary where to put the results
   ret_dic = {}
-  #then I remap all the values
-  for elem in mydict:
-    mapped_val = translate(mydict[elem], minvalue, maxvalue, newrange[0], newrange[1])
-    ret_dic[elem] = mapped_val
+  #I extract the values from the dictionary
+  dict_values = mydict.values()
+  if len(dict_values) > 0:
+    #and the max and min
+    minvalue = min(dict_values)
+    maxvalue = max(dict_values)
+    #then I remap all the values
+    for elem in mydict:
+      mapped_val = translate(mydict[elem], minvalue, maxvalue, newrange[0], newrange[1])
+      ret_dic[elem] = mapped_val
   return ret_dic
 
 
@@ -70,7 +71,7 @@ def _remap_dict_in_range(mydict, newrange=[1, 100]):
 
 def augment_graph_data(author_graph, data):
 
-  total_nodes = len(author_graph['nodes']) 
+  total_nodes = len(author_graph['nodes'])
 
   if total_nodes < 30:
     return {"fullGraph" : author_graph}
@@ -100,7 +101,7 @@ def augment_graph_data(author_graph, data):
     node_cutoff = sorted([d["nodeWeight"] for d in author_graph['nodes']], reverse=True)[:201][-1]
   else:
     node_cutoff = sorted([d["nodeWeight"] for d in author_graph['nodes']], reverse=True)[-1]+1
-    
+
   connector_nodes = []
 
   # checking to see if one node connects to all other nodes, and removing it from consideration
@@ -112,35 +113,35 @@ def augment_graph_data(author_graph, data):
       author_graph['nodes'][i]["delete"] = True
     else:
       author_graph['nodes'][i]["delete"] = False
-        
+
   # create the networkx graph
   G = nx.Graph()
-        
+
   # create a backwards dict from name to index
   index_dict = {x["nodeName"]: i for i, x in enumerate(author_graph['nodes'])}
-        
+
   for i,x in enumerate(author_graph['nodes']):
     G.add_node(i, nodeName= x["nodeName"], nodeWeight = x["nodeWeight"], delete=x["delete"])
 
   for i,x in enumerate(author_graph['links']):
     G.add_edge(x["source"], x["target"], weight = x["value"])
-   
+
   all_nodes = G.nodes()
-    
+
   #remove nodes marked "delete" before we generate the groups!
   for x in G.nodes(True):
     if x[1]["delete"] == True:
         G.remove_node(x[0])
-        
+
   #attach group names to all nodes
   partition = community.best_partition(G)
-  
+
   #make dict from group to list of items
   group_to_author_dict = defaultdict(list)
   for author in partition:
       group = partition[author]
       group_to_author_dict[group].append(author)
-                
+
  #create two level structure
   #add groups
   groups = []
@@ -157,13 +158,13 @@ def augment_graph_data(author_graph, data):
         else:
             G.remove_node(child)
     groups.append({"name" : g, "children" : children})
-    
+
   #make the group names nicer for presentation purposes
   groups = [g for g in groups if g["children"]]
   sorted_groups = sorted(groups, key=lambda x:sum([c["size"]for c in x["children"]]), reverse=True)
   for i, g in enumerate(sorted_groups):
         sorted_groups[i]["name"] = i + 1
- 
+
   top_level = {"name" : connector_nodes, "children" : sorted_groups}
 
   link_data = G.edges(data=True)
@@ -171,9 +172,9 @@ def augment_graph_data(author_graph, data):
   #remove inter-group links
   link_data = [l for l in link_data if partition[l[0]] != partition[l[1]]]
   return {"root": top_level, "bibcode_dict":bib_dict, "link_data" : link_data}
-    
 
-#Giovanni's original author network building function, with data processed by the group function 
+
+#Giovanni's original author network building function, with data processed by the group function
 #right before it is returned to the user
 
 def get_network_with_groups(authors_lists, data):
@@ -184,19 +185,19 @@ def get_network_with_groups(authors_lists, data):
 
   weight_single_authors = {}
   weight_authors_couples = {}
-  
+
   #for each set of authors of each paper
   for list_auth_in_paper in authors_lists:
-    
+
     #I sort the author name in the list so that I'm sure to have always the same couple of authors
     list_auth_in_paper.sort()
     #I get the weight per author
     auths_paper_weight = _get_author_weight(list_auth_in_paper)
-    #then I assign this weight to each author 
+    #then I assign this weight to each author
     for author in list_auth_in_paper:
       weight_single_authors.setdefault(author, 0)
       weight_single_authors[author] += auths_paper_weight
-      
+
     #if the paper has more authors than allowed I consider it only for the node and not for the links
     if len(list_auth_in_paper) <= max_num_auth_paper:
       #then I assign this weight to each couple of authors
@@ -204,37 +205,37 @@ def get_network_with_groups(authors_lists, data):
       for couple in combinations(list_auth_in_paper, 2):
         weight_authors_couples.setdefault(couple, 0);
         weight_authors_couples[couple] += auths_paper_weight
-    
+
   #then I extract all the couples with the total weight
   weight_authors_couples_list = weight_authors_couples.items()
   #and I sort by the member of the connection and then by the weight (the last sorting performed is the first in the result)
   weight_authors_couples_list = sorted(weight_authors_couples_list, key=(lambda coauth: coauth[0]), reverse=False)
   weight_authors_couples_list = sorted(weight_authors_couples_list, key=(lambda coauth: coauth[1]), reverse=True)
-  
+
   #############
   #I cut the number of links to a max value
   chosen_links = weight_authors_couples_list[:max_num_links]
-  
+
   #I extract the list of authors with their weight and I sort the list in desc mode for the weight and asc for the names
   weight_single_authors_list = weight_single_authors.items()
   weight_single_authors_list.sort(key=lambda coauth: coauth[0], reverse=False)
   weight_single_authors_list.sort(key=lambda coauth: coauth[1], reverse=True)
-  
-  #then I re-convert back the list in a dictionary          
+
+  #then I re-convert back the list in a dictionary
   chosen_links = dict(chosen_links)
-   
+
   #then for each link I calculate the value of the link in a way that can be normalized
   to_use_links = {}
   for couple in chosen_links:
     #I round the weight to the integer after multiplying it to 100
     value_link = int(round(chosen_links[couple] * 100))
     to_use_links[couple] = value_link
-  
+
   #I group the links with the same weight
   num_link_per_weight = {}
   for link in to_use_links:
     num_link_per_weight.setdefault(to_use_links[link], []).append(link)
-  
+
   #I check each group and if it's more than the maximum amount I decided at the beginning I start to select only the links
   #that have the most important nodes in it
   num_link_per_weight_selected = {}
@@ -249,10 +250,10 @@ def get_network_with_groups(authors_lists, data):
           #if the author is in the link
           if auth[0] in link:
             #I check if the author I am considering has a weight higher than the other in the link
-            #if not it means that I have already selected the link 
+            #if not it means that I have already selected the link
             #(it's not possible that I reach the current author without selecting the link if the other author has a higher weight
             #simply because I have checked the other author first)
-            
+
             #I select which author is the current one and which is the other in the link
             if link[0] == auth[0]:
               current_auth = link[0]
@@ -276,55 +277,55 @@ def get_network_with_groups(authors_lists, data):
         #if I selected the max number of links I stop
         if max_link_allowed == 0:
           break
- 
+
     #otherwise I simply copy it
     else:
       num_link_per_weight_selected[weight] = num_link_per_weight[weight]
-   
+
   #then I reconstruct the "to_use_links" dictionary
   to_use_links = {}
   for weight in num_link_per_weight_selected:
     #print weight, len(num_link_per_weight_selected[weight])
     for link in num_link_per_weight_selected[weight]:
       to_use_links[link] = weight
-  
+
   #Than I create a list of the chosen links (again)
   chosen_links = to_use_links.items()
-  
+
   #then for each link I select the nodes to show
   to_use_nodes = {}
   for couple in to_use_links:
     to_use_nodes.setdefault(couple[0], weight_single_authors[couple[0]])
     to_use_nodes.setdefault(couple[1], weight_single_authors[couple[1]])
-  
+
   #then I apply the Histogram equalization to the link weight
   hiseqobj = histeq.HistEq(to_use_links, [1, 40])
   to_use_links_normalized = hiseqobj.hist_eq()
-  
+
   #and I re map the values of the authors in a new range
   to_use_nodes = _remap_dict_in_range(to_use_nodes, [5, 150])
-  
+
   #I extract the list of names in a list, because I need the positions
   listnames = to_use_nodes.keys()
   #then I build the final variables
   nodes = []
   for name in listnames:
     nodes.append({'nodeName':name, 'nodeWeight':to_use_nodes[name]})
-  
+
   #I construct the final links using the auth_links
   links = []
-  
+
   for elems in to_use_links_normalized:
     #links.append({'source':listnames.index(elems[0]), 'target':listnames.index(elems[1]), 'value':fdict[link], 'source_name_ads': elems[0], 'target_name_ads': elems[1]})
     links.append({'source':listnames.index(elems[0]), 'target':listnames.index(elems[1]), 'value':to_use_links_normalized[elems]})
-    
+
   authors = {'nodes': nodes, 'links': links}
-    
+
   return augment_graph_data(authors, data)
 
 
 
-#Giovanni's original author network building function, with data processed by the group function 
+#Giovanni's original author network building function, with data processed by the group function
 #right before it is returned to the user
 
 def get_network(authors_lists):
@@ -335,19 +336,19 @@ def get_network(authors_lists):
 
   weight_single_authors = {}
   weight_authors_couples = {}
-  
+
   #for each set of authors of each paper
   for list_auth_in_paper in authors_lists:
-    
+
     #I sort the author name in the list so that I'm sure to have always the same couple of authors
     list_auth_in_paper.sort()
     #I get the weight per author
     auths_paper_weight = _get_author_weight(list_auth_in_paper)
-    #then I assign this weight to each author 
+    #then I assign this weight to each author
     for author in list_auth_in_paper:
       weight_single_authors.setdefault(author, 0)
       weight_single_authors[author] += auths_paper_weight
-      
+
     #if the paper has more authors than allowed I consider it only for the node and not for the links
     if len(list_auth_in_paper) <= max_num_auth_paper:
       #then I assign this weight to each couple of authors
@@ -355,37 +356,37 @@ def get_network(authors_lists):
       for couple in combinations(list_auth_in_paper, 2):
         weight_authors_couples.setdefault(couple, 0);
         weight_authors_couples[couple] += auths_paper_weight
-    
+
   #then I extract all the couples with the total weight
   weight_authors_couples_list = weight_authors_couples.items()
   #and I sort by the member of the connection and then by the weight (the last sorting performed is the first in the result)
   weight_authors_couples_list = sorted(weight_authors_couples_list, key=(lambda coauth: coauth[0]), reverse=False)
   weight_authors_couples_list = sorted(weight_authors_couples_list, key=(lambda coauth: coauth[1]), reverse=True)
-  
+
   #############
   #I cut the number of links to a max value
   chosen_links = weight_authors_couples_list[:max_num_links]
-  
+
   #I extract the list of authors with their weight and I sort the list in desc mode for the weight and asc for the names
   weight_single_authors_list = weight_single_authors.items()
   weight_single_authors_list.sort(key=lambda coauth: coauth[0], reverse=False)
   weight_single_authors_list.sort(key=lambda coauth: coauth[1], reverse=True)
-  
-  #then I re-convert back the list in a dictionary          
+
+  #then I re-convert back the list in a dictionary
   chosen_links = dict(chosen_links)
-   
+
   #then for each link I calculate the value of the link in a way that can be normalized
   to_use_links = {}
   for couple in chosen_links:
     #I round the weight to the integer after multiplying it to 100
     value_link = int(round(chosen_links[couple] * 100))
     to_use_links[couple] = value_link
-  
+
   #I group the links with the same weight
   num_link_per_weight = {}
   for link in to_use_links:
     num_link_per_weight.setdefault(to_use_links[link], []).append(link)
-  
+
   #I check each group and if it's more than the maximum amount I decided at the beginning I start to select only the links
   #that have the most important nodes in it
   num_link_per_weight_selected = {}
@@ -400,10 +401,10 @@ def get_network(authors_lists):
           #if the author is in the link
           if auth[0] in link:
             #I check if the author I am considering has a weight higher than the other in the link
-            #if not it means that I have already selected the link 
+            #if not it means that I have already selected the link
             #(it's not possible that I reach the current author without selecting the link if the other author has a higher weight
             #simply because I have checked the other author first)
-            
+
             #I select which author is the current one and which is the other in the link
             if link[0] == auth[0]:
               current_auth = link[0]
@@ -427,48 +428,48 @@ def get_network(authors_lists):
         #if I selected the max number of links I stop
         if max_link_allowed == 0:
           break
- 
+
     #otherwise I simply copy it
     else:
       num_link_per_weight_selected[weight] = num_link_per_weight[weight]
-   
+
   #then I reconstruct the "to_use_links" dictionary
   to_use_links = {}
   for weight in num_link_per_weight_selected:
     #print weight, len(num_link_per_weight_selected[weight])
     for link in num_link_per_weight_selected[weight]:
       to_use_links[link] = weight
-  
+
   #Than I create a list of the chosen links (again)
   chosen_links = to_use_links.items()
-  
+
   #then for each link I select the nodes to show
   to_use_nodes = {}
   for couple in to_use_links:
     to_use_nodes.setdefault(couple[0], weight_single_authors[couple[0]])
     to_use_nodes.setdefault(couple[1], weight_single_authors[couple[1]])
-  
+
   #then I apply the Histogram equalization to the link weight
   hiseqobj = histeq.HistEq(to_use_links, [1, 40])
   to_use_links_normalized = hiseqobj.hist_eq()
-  
+
   #and I re map the values of the authors in a new range
   to_use_nodes = _remap_dict_in_range(to_use_nodes, [5, 150])
-  
+
   #I extract the list of names in a list, because I need the positions
   listnames = to_use_nodes.keys()
   #then I build the final variables
   nodes = []
   for name in listnames:
     nodes.append({'nodeName':name, 'nodeWeight':to_use_nodes[name]})
-  
+
   #I construct the final links using the auth_links
   links = []
-  
+
   for elems in to_use_links_normalized:
     #links.append({'source':listnames.index(elems[0]), 'target':listnames.index(elems[1]), 'value':fdict[link], 'source_name_ads': elems[0], 'target_name_ads': elems[1]})
     links.append({'source':listnames.index(elems[0]), 'target':listnames.index(elems[1]), 'value':to_use_links_normalized[elems]})
-        
+
   return {'nodes': nodes, 'links': links}
 
 
