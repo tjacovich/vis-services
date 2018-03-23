@@ -99,7 +99,7 @@ class WordCloud(Resource):
             return {"Error": "There was a connection error. Please try again later", "Error Info": response.text}, response.status_code
 
         if data:
-            records = [unicode(". ".join(d.get('title', '')[:1000]) + ". " + d.get('abstract', '')[:5000]) for d in data["response"]["docs"]]
+            records = [unicode(". ".join(d.get('title', '')[:current_app.config.get("VIS_SERVICE_WC_MAX_TITLE_SIZE")]) + ". " + d.get('abstract', '')[:current_app.config.get("VIS_SERVICE_WC_MAX_ABSTRACT_SIZE")]) for d in data["response"]["docs"]]
             word_cloud_json = word_cloud.generate_wordcloud(records, n_most_common=current_app.config.get("VIS_SERVICE_WC_MAX_WORDS"), n_threads=current_app.config.get("VIS_SERVICE_WC_THREADS"), accepted_pos=(u'NN', u'NNP', u'NNS', u'NNPS', u'JJ', u'RB', u'VB', u'VBD', u'VBG', u'VBN', u'VBP', u'VBZ'))
 
         if word_cloud_json:
