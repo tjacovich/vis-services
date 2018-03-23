@@ -9,11 +9,9 @@ VIS_SERVICE_API_TOKEN = None
 
 #word cloud config
 VIS_SERVICE_WC_MAX_RECORDS = 500
-VIS_SERVICE_WC_START = 0
+VIS_SERVICE_WC_MAX_WORDS = 100
+VIS_SERVICE_WC_THREADS = 2
 
-#threshold that a word stem has to pass before being included
-VIS_SERVICE_WC_MIN_PERCENT_WORD = 3
-VIS_SERVICE_WC_MIN_OCCURRENCES_WORD = 2
 
 #author network config
 VIS_SERVICE_AN_MAX_RECORDS = 1000
