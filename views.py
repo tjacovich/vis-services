@@ -86,20 +86,12 @@ class WordCloud(Resource):
                 return {'Error' : 'there was a problem with your request', 'Error Info': 'couldn\'t decode query, it should be json-encoded before being sent (so double encoded)'}, 403
 
         solr_args["rows"] = min(int(solr_args.get("rows", [current_app.config.get("VIS_SERVICE_WC_MAX_RECORDS")])[0]), current_app.config.get("VIS_SERVICE_WC_MAX_RECORDS"))
-        solr_args['fields'] = ['id']
-        solr_args['defType'] = 'aqp'
-        solr_args['tv'] = 'true'
-        solr_args['tv.tf_idf'] = 'true'
-        solr_args['tv.tf'] = 'true'
-        solr_args['tv.positions'] ='false'
-        solr_args['tf.offsets'] = 'false'
-        solr_args['tv.fl'] ='abstract,title'
-        solr_args['fl'] ='id,abstract,title'
+        solr_args['fl'] ='abstract,title'
         solr_args['wt'] = 'json'
 
         headers = {'X-Forwarded-Authorization' : request.headers.get('Authorization')}
 
-        response = client().get(current_app.config.get("VIS_SERVICE_TVRH_PATH") , params = solr_args, headers=headers)
+        response = client().get(current_app.config.get("VIS_SERVICE_SOLR_PATH") , params = solr_args, headers=headers)
 
         if response.status_code == 200:
             data = response.json()
@@ -107,10 +99,9 @@ class WordCloud(Resource):
             return {"Error": "There was a connection error. Please try again later", "Error Info": response.text}, response.status_code
 
         if data:
-            min_percent_word = request.args.get("min_percent_word", current_app.config.get("VIS_SERVICE_WC_MIN_PERCENT_WORD"))
-            min_occurrences_word = request.args.get("min_occurrences_word", current_app.config.get("VIS_SERVICE_WC_MIN_OCCURRENCES_WORD"))
+            records = [unicode(". ".join(d.get('title', '')[:current_app.config.get("VIS_SERVICE_WC_MAX_TITLE_SIZE")]) + ". " + d.get('abstract', '')[:current_app.config.get("VIS_SERVICE_WC_MAX_ABSTRACT_SIZE")]) for d in data["response"]["docs"]]
+            word_cloud_json = word_cloud.generate_wordcloud(records, n_most_common=current_app.config.get("VIS_SERVICE_WC_MAX_WORDS"), n_threads=current_app.config.get("VIS_SERVICE_WC_THREADS"), accepted_pos=(u'NN', u'NNP', u'NNS', u'NNPS', u'JJ', u'RB', u'VB', u'VBD', u'VBG', u'VBN', u'VBP', u'VBZ'))
 
-            word_cloud_json = word_cloud.generate_wordcloud(data, min_percent_word = min_percent_word, min_occurrences_word = min_occurrences_word)
         if word_cloud_json:
             return word_cloud_json, 200
         else:

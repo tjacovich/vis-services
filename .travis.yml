@@ -4,4 +4,6 @@ python:
 install:
   - pip install -r requirements.txt
   - pip install -r dev-requirements.txt
-script: "nosetests"
+  - python -m spacy download en
+script:
+  - "py.test tests"
