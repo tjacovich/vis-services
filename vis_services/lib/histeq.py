@@ -98,11 +98,8 @@ class HistEq(object):
             #in case of error there is nothing to do
             return {}
 
-        try:
-            minlist = min(self.numseq)
-        except:
-            #in case of error there is nothing to do
-            return {}
+        # No need to "try" this, because if this would crash, it would have done so with "max" already
+        minlist = min(self.numseq)
 
         #I create a new dictionary for the results
         newdict = {}

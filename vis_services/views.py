@@ -18,7 +18,6 @@ class QueryException(Exception):
 def make_request(request, service_string, required_fields):
     bibcodes = []
     query = None
-
     if 'bibcodes' in request.json:
         if 'query' in request.json and request.json['query']:
             raise QueryException('Cannot send both bibcodes and query')
@@ -114,12 +113,11 @@ class AuthorNetwork(Resource):
     rate_limit = [500,60*60*24]
 
     def post(self):
-
         try:
             required_fields = ['author_norm', 'title', 'citation_count', 'read_count','bibcode', 'pubdate']
             response = make_request(request, "AN", required_fields)
-        except QueryException as error:
-            return {'Error' : 'there was a problem with your request', 'Error Info': error}, 403
+        except QueryException, error:
+            return {'Error' : 'there was a problem with your request', 'Error Info': str(error)}, 403
 
         if response.status_code == 200:
             full_response = response.json()
@@ -151,8 +149,8 @@ class PaperNetwork(Resource):
         try:
             required_fields = ['bibcode,title,first_author,year,citation_count,read_count,reference']
             response = make_request(request, "PN", required_fields)
-        except QueryException as error:
-            return {'Error' : 'there was a problem with your request', 'Error Info': error}, 403
+        except QueryException, error:
+            return {'Error' : 'there was a problem with your request', 'Error Info': str(error)}, 403
 
         if response.status_code == 200:
             full_response = response.json()
