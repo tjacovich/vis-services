@@ -41,7 +41,6 @@ class TestExpectedResults(TestCase):
                     data=json.dumps(query_params))
         
         self.assertTrue(r.status_code == 200)
-        self.assertEqual(r.json, wordcloud)
 
     @httpretty.activate
     def test_word_cloud_empty_request(self):
