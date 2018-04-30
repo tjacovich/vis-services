@@ -1,5 +1,5 @@
 from flask_testing import TestCase
-import app
+from vis_services import app
 
 class TestWebservices(TestCase):
 
