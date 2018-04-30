@@ -10,10 +10,7 @@ from werkzeug.serving import run_simple
 def create_app(**config):
     """Application factory"""
 
-    if config:
-        app = ADSFlask(__name__, static_folder=None, local_config=config)
-    else:
-        app = ADSFlask(__name__, static_folder=None)
+    app = ADSFlask(__name__, static_folder=None, local_config=config or {})
 
     app.url_map.strict_slashes = False
 
