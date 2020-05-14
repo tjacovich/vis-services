@@ -1,5 +1,5 @@
-git+https://github.com/adsabs/ADSMicroserviceUtils.git@v1.0.13
+git+https://github.com/adsabs/ADSMicroserviceUtils.git@v1.1.4
 networkx==1.9.1
 numpy==1.12.1
 python-louvain==0.3
-spacy==2.0.9
+spacy==2.0.18
