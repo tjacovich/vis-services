@@ -35,7 +35,7 @@ def make_request(request, service_string, required_fields):
         headers = {
             'X-Forwarded-Authorization' : request.headers.get('Authorization'),
             'Content-Type': 'big-query/csv',
-            'Authorization': 'Bearer %s' % request.headers.get('X-Forwarded-Authorization', request.headers.get('Authorization', ''))
+            'Authorization': request.headers.get('X-Forwarded-Authorization', request.headers.get('Authorization', ''))
         }
         big_query_params = {'q':'*:*', 'wt':'json', 'fl': required_fields, 'fq': '{!bitset}', 'rows' : len(bibcodes)}
 
@@ -55,7 +55,7 @@ def make_request(request, service_string, required_fields):
         solr_args["rows"] = min(int(solr_args.get("rows", [current_app.config.get("VIS_SERVICE_AN_MAX_RECORDS")])[0]), current_app.config.get("VIS_SERVICE_AN_MAX_RECORDS"))
         solr_args['fl'] = required_fields
         solr_args['wt'] ='json'
-        headers = {'Authorization': 'Bearer %s' % request.headers.get('X-Forwarded-Authorization', request.headers.get('Authorization', ''))}
+        headers = {'Authorization': request.headers.get('X-Forwarded-Authorization', request.headers.get('Authorization', ''))}
 
         response = client().get(current_app.config.get("VIS_SERVICE_SOLR_PATH"), params = solr_args, headers = headers )
         return response
@@ -92,7 +92,7 @@ class WordCloud(Resource):
         solr_args['fl'] ='abstract,title'
         solr_args['wt'] = 'json'
 
-        headers = {'Authorization': 'Bearer %s' % request.headers.get('X-Forwarded-Authorization', request.headers.get('Authorization', ''))}
+        headers = {'Authorization': request.headers.get('X-Forwarded-Authorization', request.headers.get('Authorization', ''))}
 
         response = client().get(current_app.config.get("VIS_SERVICE_SOLR_PATH") , params = solr_args, headers=headers)
 
