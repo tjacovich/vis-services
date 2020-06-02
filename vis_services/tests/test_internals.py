@@ -133,19 +133,17 @@ class TestAppLogic(TestCase):
         '''Create the wsgi application'''
         app_ = app.create_app(**{
             'FOO': ['bar', {}],
-            'VIS_SERVICE_API_TOKEN': 'secret_token',
+            'SERVICE_TOKEN': 'secret_token',
                })            
 
         return app_
     
     def test_solr_client(self):
-        from vis_services.client import client
+        from vis_services.client import client,Client
         
         cl = client()
         # Check whether the client is an instance of the correct type
-        self.assertIsInstance(cl, requests.sessions.Session)
-        # Check whether the client carries the API token
-        self.assertEqual(cl.headers['Authorization'], 'Bearer secret_token')
+        self.assertIsInstance(cl, Client)
 
     def test_author_helper_functions(self):
         import vis_services.lib.author_network as AN
