@@ -3,3 +3,4 @@ networkx==1.9.1
 numpy==1.12.1
 python-louvain==0.3
 spacy==2.0.18
+Werkzeug==0.15.3
