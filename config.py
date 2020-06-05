@@ -1,5 +1,9 @@
 import os
 
+# must be here for adsmutils to override it using env vars
+# but if left empty (resolving to False) it won't be used
+SERVICE_TOKEN = None
+
 LOG_STDOUT = True
 
 VIS_SERVICE_BIGQUERY_PATH = 'http://ecs-staging-elb-2044121877.us-east-1.elb.amazonaws.com/v1/search/bigquery'
