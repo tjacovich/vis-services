@@ -1,5 +1,4 @@
 [![Waffle.io - Columns and their card count](https://badge.waffle.io/adsabs/vis-services.svg?columns=all)](https://waffle.io/adsabs/vis-services)
-[![Build Status](https://travis-ci.org/adsabs/vis-services.svg?branch=master)](https://travis-ci.org/adsabs/vis-services)
 [![Coverage Status](https://coveralls.io/repos/adsabs/vis-services/badge.svg)](https://coveralls.io/r/adsabs/vis-services)
 [![Code Climate](https://codeclimate.com/github/adsabs/vis-services/badges/gpa.svg)](https://codeclimate.com/github/adsabs/vis-services)
 [![Issue Count](https://codeclimate.com/github/adsabs/vis-services/badges/issue_count.svg)](https://codeclimate.com/github/adsabs/vis-services)
