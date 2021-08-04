@@ -9,7 +9,7 @@ class HistEq(object):
     def __init__(self, numseq, myrange=[1,10]):
         """Constructor"""
         self.orig_list = numseq
-        self.numseq =  numseq.values()
+        self.numseq =  list(numseq.values())
         self.numseq_unique =  list(set(self.numseq))
         self.numseq_len = len(self.numseq)
         self.myrange = myrange
@@ -52,7 +52,7 @@ class HistEq(object):
         #definition of the new range
         myrange = self.myrange
         #I extract the values from the dictionary
-        myvalues = locdic.values()
+        myvalues = list(locdic.values())
         #I extract the maximun and the minimum value of the dictionary
         minvalue = min(myvalues)
         maxvalue = max(myvalues)

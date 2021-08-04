@@ -39,7 +39,7 @@ class TestExpectedResults(TestCase):
                     url_for('wordcloud'),
                     content_type='application/json',
                     data=json.dumps(query_params))
-        
+
         self.assertTrue(r.status_code == 200)
 
     @httpretty.activate
@@ -56,7 +56,7 @@ class TestExpectedResults(TestCase):
                     url_for('wordcloud'),
                     content_type='application/json',
                     data=json.dumps(query_params))
-        expected = {u'Error Info': u'no data provided with request', u'Error': u'there was a problem with your request'}
+        expected = {'Error Info': 'no data provided with request', 'Error': 'there was a problem with your request'}
         self.assertEqual(r.status_code, 403)
         self.assertEqual(r.json, expected)
 
@@ -74,7 +74,7 @@ class TestExpectedResults(TestCase):
                     url_for('wordcloud'),
                     content_type='application/json',
                     data=json.dumps(query_params))
-        expected = {u'Error Info': u"couldn't decode query, it should be json-encoded before being sent (so double encoded)", u'Error': u'there was a problem with your request'}
+        expected = {'Error Info': "couldn't decode query, it should be json-encoded before being sent (so double encoded)", 'Error': 'there was a problem with your request'}
         self.assertEqual(r.status_code, 403)
 
     @httpretty.activate
@@ -92,7 +92,7 @@ class TestExpectedResults(TestCase):
                     content_type='application/json',
                     data=json.dumps(query_params))
 
-        expected = {u'Error Info': u'Oops. Something went wrong!', u'Error': u'There was a connection error. Please try again later'}
+        expected = {'Error Info': 'Oops. Something went wrong!', 'Error': 'There was a connection error. Please try again later'}
         self.assertEqual(r.status_code, 500)
         self.assertEqual(r.json, expected)
 
@@ -110,7 +110,7 @@ class TestExpectedResults(TestCase):
                     url_for('authornetwork'),
                     content_type='application/json',
                     data=json.dumps(query_params))
-        
+
         self.assertTrue(r.status_code == 200)
 
     @httpretty.activate
@@ -128,7 +128,7 @@ class TestExpectedResults(TestCase):
                     content_type='application/json',
                     data=json.dumps(query_params))
 
-        expected = {u'Error Info': u'Oops. Something went wrong!', u'Error': u'There was a connection error. Please try again later'}
+        expected = {'Error Info': 'Oops. Something went wrong!', 'Error': 'There was a connection error. Please try again later'}
         self.assertEqual(r.status_code, 500)
         self.assertEqual(r.json, expected)
 
@@ -146,7 +146,7 @@ class TestExpectedResults(TestCase):
                     url_for('authornetwork'),
                     content_type='application/json',
                     data=json.dumps(query_params))
-        expected = {u'Error Info': u'Cannot send both bibcodes and query', u'Error': u'there was a problem with your request'}
+        expected = {'Error Info': 'Cannot send both bibcodes and query', 'Error': 'there was a problem with your request'}
         self.assertEqual(r.status_code, 403)
         self.assertEqual(r.json, expected)
 
@@ -182,7 +182,7 @@ class TestExpectedResults(TestCase):
                     content_type='application/json',
                     data=json.dumps(query_params))
 
-        expected = {u'Error Info': u'Oops. Something went wrong!', u'Error': u'There was a connection error. Please try again later'}
+        expected = {'Error Info': 'Oops. Something went wrong!', 'Error': 'There was a connection error. Please try again later'}
         self.assertEqual(r.status_code, 500)
         self.assertEqual(r.json, expected)
 
@@ -200,6 +200,6 @@ class TestExpectedResults(TestCase):
                     url_for('papernetwork'),
                     content_type='application/json',
                     data=json.dumps(query_params))
-        expected = {u'Error Info': u'Cannot send both bibcodes and query', u'Error': u'there was a problem with your request'}
+        expected = {'Error Info': 'Cannot send both bibcodes and query', 'Error': 'there was a problem with your request'}
         self.assertEqual(r.status_code, 403)
         self.assertEqual(r.json, expected)

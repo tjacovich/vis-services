@@ -9,7 +9,7 @@ import sys
 import os
 import time
 import operator
-import histeq
+from . import histeq
 from numpy import mat
 from numpy import zeros
 from numpy import fill_diagonal
@@ -22,7 +22,7 @@ import math
 from networkx.readwrite import json_graph
 from collections import defaultdict
 
-import tf_idf
+from . import tf_idf
 
 __all__ = ['get_papersnetwork']
 
@@ -54,7 +54,7 @@ def _sort_and_cut_results(resdict,cutoff=1500):
         return resdict
     else:
         # first sort the dictionary
-        sorted_list = sorted(resdict.iteritems(), key=operator.itemgetter(1), reverse=True)
+        sorted_list = sorted(iter(resdict.items()), key=operator.itemgetter(1), reverse=True)
         # then cut the list to one of length 'cutoff'
         cut_sorted_list = sorted_list[:cutoff]
         # and finally contruct the smaller results dictionary
@@ -95,7 +95,7 @@ def augment_graph_data(data, max_groups):
     partition = community.best_partition(G)
 
     for g in G.nodes():
-        G.node[g]["group"] = partition[g]
+        G.nodes[g]["group"] = partition[g]
 
     #with new group info, create the summary group graph
     summary_graph = community.induced_graph(partition, G)
@@ -105,46 +105,46 @@ def augment_graph_data(data, max_groups):
 
     #enhance the information that will be in the json handed off to d3
     for x in summary_graph.nodes():
-        summary_graph.node[x]["total_citations"] = sum([G.node[paper].get("citation_count", 0) for paper in G.nodes() if G.node[paper]["group"] == x])
-        summary_graph.node[x]["total_reads"] = sum([G.node[paper].get("read_count", 0) for paper in G.nodes() if G.node[paper]["group"] == x])
-        papers = sorted([G.node[paper] for paper in G.nodes() if G.node[paper]["group"] == x], key = lambda x: x.get("nodeWeight", 0), reverse = True)
+        summary_graph.nodes[x]["total_citations"] = sum([G.nodes[paper].get("citation_count", 0) for paper in G.nodes() if G.nodes[paper]["group"] == x])
+        summary_graph.nodes[x]["total_reads"] = sum([G.nodes[paper].get("read_count", 0) for paper in G.nodes() if G.nodes[paper]["group"] == x])
+        papers = sorted([G.nodes[paper] for paper in G.nodes() if G.nodes[paper]["group"] == x], key = lambda x: x.get("nodeWeight", 0), reverse = True)
         titles[x] = [p["title"]for p in papers]
-        summary_graph.node[x]["paper_count"] = len(papers)
+        summary_graph.nodes[x]["paper_count"] = len(papers)
 
     #attaching title 'word clouds' to the nodes
     significant_words = tf_idf.get_tf_idf_vals(titles)
-    for x in summary_graph.nodes():
+    for x in list(summary_graph.nodes()):
         #remove the ones with only 1 paper
-        if summary_graph.node[x]["paper_count"] == 1:
+        if summary_graph.nodes[x]["paper_count"] == 1:
             summary_graph.remove_node(x)
         else:
             #otherwise, give them a title
             #how many words should we show on the group? max 6, otherwise 1 per every 2 papers
-            summary_graph.node[x]["node_label"] =  dict(sorted(significant_words[x].items(), key = lambda x: x[1], reverse = True)[:6])
+            summary_graph.nodes[x]["node_label"] =  dict(sorted(list(significant_words[x].items()), key = lambda x: x[1], reverse = True)[:6])
 
 
     #remove all but top n groups from summary graph
     #where top n is measured by total citations from a group
     top_nodes = sorted([n for n in summary_graph.nodes(data = True)], key= lambda x : x[1]["total_citations"], reverse = True )[:max_groups]
-    top_nodes = [t for t in top_nodes if t >=1]
+    top_nodes = [t for t in top_nodes if t[0] >=1]
     top_node_ids = [n[0] for n in top_nodes]
-    for group_id in summary_graph.nodes():
+    for group_id in list(summary_graph.nodes()):
         if group_id not in top_node_ids:
             summary_graph.remove_node(group_id)
 
     #remove nodes from full graph that aren't in top group
     #this automatically takes care of edges, too
-    for node in G.nodes(data = True):
+    for node in list(G.nodes(data = True)):
         if node[1]["group"] not in top_node_ids:
             G.remove_node(node[0])
 
     #continuing to enhance the information: add to group info about the most common co-references
     for x in summary_graph.nodes():
         #make a float so division later to get a percent makes sense
-        num_papers =  float(summary_graph.node[x]["paper_count"])
+        num_papers =  float(summary_graph.nodes[x]["paper_count"])
         references = {}
         #find all members of group x
-        indexes =  [paperIndex for paperIndex in G.nodes() if G.node[paperIndex]["group"] == x]
+        indexes =  [paperIndex for paperIndex in G.nodes() if G.nodes[paperIndex]["group"] == x]
         for edge in G.edges(data=True):
             #if it passes, it's an inter-group connection
             # [0] is source, [1] is target, [2] is data dict
@@ -157,10 +157,10 @@ def augment_graph_data(data, max_groups):
                     else:
                         references[bib] = set([paper_one, paper_two])
 
-        count_references = sorted(references.items(), key=lambda x:len(x[1]), reverse = True)[:5]
+        count_references = sorted(list(references.items()), key=lambda x:len(x[1]), reverse = True)[:5]
         top_common_references = [(tup[0], float("{0:.2f}".format(len(tup[1])/num_papers))) for tup in count_references]
         top_common_references = dict(top_common_references)
-        summary_graph.node[x]["top_common_references"] = top_common_references
+        summary_graph.nodes[x]["top_common_references"] = top_common_references
 
     summary_json = json_graph.node_link_data(summary_graph)
 
@@ -201,22 +201,22 @@ def get_papernetwork(solr_data, max_groups, weighted=True, equalization=False, d
               of the number of references in the linked nodes.
     '''
     # Get get paper list from the Solr data
-    papers_list = map(lambda a: a['bibcode'], solr_data)
+    papers_list = [a['bibcode'] for a in solr_data]
     number_of_papers = len(papers_list)
     # First construct the reference dictionary, and a unique list of cited papers
     reference_dictionary = _get_reference_mapping(solr_data)
     # From now on we'll only work with publications that actually have references
-    papers = reference_dictionary.keys()
+    papers = list(reference_dictionary.keys())
     # Compile a unique list of cited papers
-    ref_list = list(set([ref for sublist in reference_dictionary.values() for ref in sublist]))
+    ref_list = list(set([ref for sublist in list(reference_dictionary.values()) for ref in sublist]))
     # transform that list into a dictionary for fast lookup
-    ref_list = dict(zip(ref_list, range(len(ref_list))))
+    ref_list = dict(list(zip(ref_list, list(range(len(ref_list))))))
     empty_vec = [0]*len(ref_list)
     # Construct the paper-citation occurence matrix R
     entries = []
     for p in papers:
         vec = empty_vec[:]
-        ref_ind = map(lambda a: ref_list.get(a), reference_dictionary[p])
+        ref_ind = [ref_list.get(a) for a in reference_dictionary[p]]
         for entry in ref_ind:
             vec[entry] = 1
         entries.append(vec)
@@ -256,7 +256,7 @@ def get_papernetwork(solr_data, max_groups, weighted=True, equalization=False, d
     # Don't forget that this is a symmetrical relationship and the diagonal is irrelevant,
     # so we will only iterate over the upper diagonal. Seems like this could be pulled in
     # the generation of W (above)
-    ref_papers = dict(zip(papers, range(len(papers))))
+    ref_papers = dict(list(zip(papers, list(range(len(papers))))))
     Npapers = len(papers)
     for i in range(Npapers):
         for j in range(i+1,Npapers):

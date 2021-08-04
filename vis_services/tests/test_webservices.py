@@ -22,7 +22,7 @@ class TestWebservices(TestCase):
             # Assert each key is a string-type
             [
                 self.assertIsInstance(k,
-                                      basestring,
+                                      str,
                                       msg="{0} is not a string".format(k))
                 for k in r.json
             ]
@@ -30,16 +30,16 @@ class TestWebservices(TestCase):
             for expected_field, _type in {
                 'scopes': list,
                 'methods': list,
-                'description': basestring,
+                'description': str,
                 'rate_limit': list
-            }.iteritems():
+            }.items():
 
                 # Assert each resource is described has the expected_field
                 [
                     self.assertIn(expected_field,
                                   v,
                                   msg="{0} not in {1}".format(expected_field, v))
-                    for v in r.json.values()
+                    for v in list(r.json.values())
                 ]
 
                 # Assert every expected_field has the proper type
@@ -48,5 +48,5 @@ class TestWebservices(TestCase):
                                           _type,
                                           msg="{0} is not type {1}"
                                           .format(v[expected_field], _type))
-                    for v in r.json.values()
+                    for v in list(r.json.values())
                 ]

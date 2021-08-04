@@ -3,8 +3,8 @@ File that takes care of the authors network
 Version 2
 mostly by Giovanni with some additions by Alex
 '''
-from __future__ import division
-import histeq
+
+from . import histeq
 from itertools import combinations
 import networkx as nx
 import community
@@ -55,7 +55,7 @@ def _remap_dict_in_range(mydict, newrange=[1, 100]):
     #I define a new dictionary where to put the results
     ret_dic = {}
     #I extract the values from the dictionary
-    dict_values = mydict.values()
+    dict_values = list(mydict.values())
     if len(dict_values) > 0:
         #and the max and min
         minvalue = min(dict_values)
@@ -128,7 +128,7 @@ def augment_graph_data(author_graph, data):
     all_nodes = G.nodes()
 
     #remove nodes marked "delete" before we generate the groups!
-    for x in G.nodes(True):
+    for x in list(G.nodes(True)):
         if x[1]["delete"] == True:
             G.remove_node(x[0])
 
@@ -147,9 +147,9 @@ def augment_graph_data(author_graph, data):
     for g in group_to_author_dict:
         children = []
         for child in group_to_author_dict[g]:
-            if G.node[child].get("nodeWeight") > node_cutoff:
-                name = G.node[child].get("nodeName")
-                size = G.node[child].get("nodeWeight")
+            if G.nodes[child].get("nodeWeight") > node_cutoff:
+                name = G.nodes[child].get("nodeName")
+                size = G.nodes[child].get("nodeWeight")
                 bibs = sorted(name_dict[name], key=lambda x:bib_dict[x]["citation_count"], reverse=True)
                 total_citations = sum([bib_dict[bibcode]["citation_count"] for bibcode in name_dict[name]])
                 total_reads = sum([bib_dict[bibcode]["read_count"] for bibcode in name_dict[name]])
@@ -204,7 +204,7 @@ def get_network_with_groups(authors_lists, data):
                 weight_authors_couples[couple] += auths_paper_weight
 
     #then I extract all the couples with the total weight
-    weight_authors_couples_list = weight_authors_couples.items()
+    weight_authors_couples_list = list(weight_authors_couples.items())
     #and I sort by the member of the connection and then by the weight (the last sorting performed is the first in the result)
     weight_authors_couples_list = sorted(weight_authors_couples_list, key=(lambda coauth: coauth[0]), reverse=False)
     weight_authors_couples_list = sorted(weight_authors_couples_list, key=(lambda coauth: coauth[1]), reverse=True)
@@ -214,7 +214,7 @@ def get_network_with_groups(authors_lists, data):
     chosen_links = weight_authors_couples_list[:max_num_links]
 
     #I extract the list of authors with their weight and I sort the list in desc mode for the weight and asc for the names
-    weight_single_authors_list = weight_single_authors.items()
+    weight_single_authors_list = list(weight_single_authors.items())
     weight_single_authors_list.sort(key=lambda coauth: coauth[0], reverse=False)
     weight_single_authors_list.sort(key=lambda coauth: coauth[1], reverse=True)
 
@@ -286,7 +286,7 @@ def get_network_with_groups(authors_lists, data):
             to_use_links[link] = weight
 
     #Than I create a list of the chosen links (again)
-    chosen_links = to_use_links.items()
+    chosen_links = list(to_use_links.items())
 
     #then for each link I select the nodes to show
     to_use_nodes = {}
@@ -302,7 +302,7 @@ def get_network_with_groups(authors_lists, data):
     to_use_nodes = _remap_dict_in_range(to_use_nodes, [5, 150])
 
     #I extract the list of names in a list, because I need the positions
-    listnames = to_use_nodes.keys()
+    listnames = list(to_use_nodes.keys())
     #then I build the final variables
     nodes = []
     for name in listnames:

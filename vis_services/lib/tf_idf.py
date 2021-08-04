@@ -1,4 +1,4 @@
-from __future__ import division
+
 import re
 import itertools
 import math
@@ -39,8 +39,8 @@ def is_number(s):
 
 def get_tf_idf_vals(title_dict):
     return_dict = {}
-    word_dict = {tup[0] : tokenize(tup[1]) for tup in title_dict.items()}
-    idf_dict = make_idf_dict(word_dict.values())
+    word_dict = {tup[0] : tokenize(tup[1]) for tup in list(title_dict.items())}
+    idf_dict = make_idf_dict(list(word_dict.values()))
     for group in word_dict:
         #calculate word histogram
         freq_dict = {}
@@ -59,7 +59,7 @@ def get_tf_idf_vals(title_dict):
                     freq_dict[f2] = 0
         final_dict = {}
         for f in freq_dict:
-            final_dict[f.encode("utf-8")] = freq_dict[f] * idf_dict[f]
+            final_dict[f] = freq_dict[f] * idf_dict[f]
         return_dict[group] = final_dict
     return return_dict
 

@@ -1,10 +1,10 @@
 from flask import current_app, request
 from flask_restful import Resource, reqparse
 from flask_discoverer import advertise
-from lib import word_cloud
-from lib import author_network
-from lib import paper_network
-from client import client
+from .lib import word_cloud
+from .lib import author_network
+from .lib import paper_network
+from .client import client
 import json
 
 # the function make_request is used for paper and author network,
@@ -22,7 +22,7 @@ def make_request(request, service_string, required_fields):
         if 'query' in request.json and request.json['query']:
             raise QueryException('Cannot send both bibcodes and query')
 
-        bibcodes = map(str, request.json['bibcodes'])
+        bibcodes = list(map(str, request.json['bibcodes']))
 
         if len(bibcodes) > current_app.config.get("VIS_SERVICE_" + service_string + "_MAX_RECORDS"):
             raise QueryException('No results: number of submitted bibcodes exceeds maximum number')
@@ -102,8 +102,8 @@ class WordCloud(Resource):
             return {"Error": "There was a connection error. Please try again later", "Error Info": response.text}, response.status_code
 
         if data:
-            records = [unicode(". ".join(d.get('title', '')[:current_app.config.get("VIS_SERVICE_WC_MAX_TITLE_SIZE")]) + ". " + d.get('abstract', '')[:current_app.config.get("VIS_SERVICE_WC_MAX_ABSTRACT_SIZE")]) for d in data["response"]["docs"]]
-            word_cloud_json = word_cloud.generate_wordcloud(records, n_most_common=current_app.config.get("VIS_SERVICE_WC_MAX_WORDS"), n_threads=current_app.config.get("VIS_SERVICE_WC_THREADS"), accepted_pos=(u'NN', u'NNP', u'NNS', u'NNPS', u'JJ', u'RB', u'VB', u'VBD', u'VBG', u'VBN', u'VBP', u'VBZ'))
+            records = [str(". ".join(d.get('title', '')[:current_app.config.get("VIS_SERVICE_WC_MAX_TITLE_SIZE")]) + ". " + d.get('abstract', '')[:current_app.config.get("VIS_SERVICE_WC_MAX_ABSTRACT_SIZE")]) for d in data["response"]["docs"]]
+            word_cloud_json = word_cloud.generate_wordcloud(records, n_most_common=current_app.config.get("VIS_SERVICE_WC_MAX_WORDS"), accepted_pos=('NN', 'NNP', 'NNS', 'NNPS', 'JJ', 'RB', 'VB', 'VBD', 'VBG', 'VBN', 'VBP', 'VBZ'))
 
         if word_cloud_json:
             return word_cloud_json, 200
@@ -120,7 +120,7 @@ class AuthorNetwork(Resource):
         try:
             required_fields = ['author_norm', 'title', 'citation_count', 'read_count','bibcode', 'pubdate']
             response = make_request(request, "AN", required_fields)
-        except QueryException, error:
+        except QueryException as error:
             return {'Error' : 'there was a problem with your request', 'Error Info': str(error)}, 403
 
         if response.status_code == 200:
@@ -153,7 +153,7 @@ class PaperNetwork(Resource):
         try:
             required_fields = ['bibcode,title,first_author,year,citation_count,read_count,reference']
             response = make_request(request, "PN", required_fields)
-        except QueryException, error:
+        except QueryException as error:
             return {'Error' : 'there was a problem with your request', 'Error Info': str(error)}, 403
 
         if response.status_code == 200:
