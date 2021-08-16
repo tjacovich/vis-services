@@ -157,7 +157,7 @@ def augment_graph_data(data, max_groups):
                     else:
                         references[bib] = set([paper_one, paper_two])
 
-        count_references = sorted(list(references.items()), key=lambda x:len(x[1]), reverse = True)[:5]
+        count_references = sorted(references.items(), key=lambda x:len(x[1]), reverse = True)[:5]
         top_common_references = [(tup[0], float("{0:.2f}".format(len(tup[1])/num_papers))) for tup in count_references]
         top_common_references = dict(top_common_references)
         summary_graph.nodes[x]["top_common_references"] = top_common_references
@@ -210,7 +210,7 @@ def get_papernetwork(solr_data, max_groups, weighted=True, equalization=False, d
     # Compile a unique list of cited papers
     ref_list = list(set([ref for sublist in list(reference_dictionary.values()) for ref in sublist]))
     # transform that list into a dictionary for fast lookup
-    ref_list = dict(list(zip(ref_list, list(range(len(ref_list))))))
+    ref_list = dict(zip(ref_list, list(range(len(ref_list)))))
     empty_vec = [0]*len(ref_list)
     # Construct the paper-citation occurence matrix R
     entries = []
@@ -256,7 +256,7 @@ def get_papernetwork(solr_data, max_groups, weighted=True, equalization=False, d
     # Don't forget that this is a symmetrical relationship and the diagonal is irrelevant,
     # so we will only iterate over the upper diagonal. Seems like this could be pulled in
     # the generation of W (above)
-    ref_papers = dict(list(zip(papers, list(range(len(papers))))))
+    ref_papers = dict(zip(papers, list(range(len(papers)))))
     Npapers = len(papers)
     for i in range(Npapers):
         for j in range(i+1,Npapers):

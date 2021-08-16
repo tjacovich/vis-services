@@ -48,5 +48,5 @@ class TestWebservices(TestCase):
                                           _type,
                                           msg="{0} is not type {1}"
                                           .format(v[expected_field], _type))
-                    for v in list(r.json.values())
+                    for v in r.json.values()
                 ]

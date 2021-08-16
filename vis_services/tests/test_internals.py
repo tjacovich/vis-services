@@ -349,7 +349,7 @@ class TestAppLogic(TestCase):
                 res = make_request(request.request, "PN", required_fields)
             except QueryException as e:
                 err = e
-            except Exception as err:
+            except Exception as e:
                 err = e
             self.assertEqual(str(err), 'No bibcodes found in POST body')
         # Too many bibcodes should result in an Exception
@@ -374,7 +374,7 @@ class TestAppLogic(TestCase):
                 res = make_request(request.request, "PN", required_fields)
             except QueryException as e:
                 err = e
-            except Exception as err:
+            except Exception as e:
                 err = e
             self.assertEqual(str(err), 'couldn\'t decode query, it should be json-encoded before being sent (so double encoded)')
         # We should get either 'bibcode' or 'query' requests!
