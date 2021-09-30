@@ -1,23 +1,23 @@
-from __future__ import division
+
 #python -m spacy download en # Downloads en_core_web_sm by default
 import os
 import spacy
 from collections import Counter
 from spacy.matcher import Matcher
 import math
-nlp = spacy.load('en', disable=['parser', 'ner']) # Loads en_core_web_sm by default
+nlp = spacy.load('en_core_web_sm', disable=['parser', 'ner']) # Loads en_core_web_sm by default
 
-def generate_wordcloud(records, n_most_common = 100, n_threads = 3, accepted_pos = (u'NN', u'NNP', u'NNS', u'NNPS', u'JJ', u'RB', u'VB', u'VBD', u'VBG', u'VBN', u'VBP', u'VBZ')):
+def generate_wordcloud(records, n_most_common = 100, accepted_pos = ('NN', 'NNP', 'NNS', 'NNPS', 'JJ', 'RB', 'VB', 'VBD', 'VBG', 'VBN', 'VBP', 'VBZ')):
     # List of English POS: https://spacy.io/api/annotation
     # Segment text into tokens and assign part-of-speech tags:
     docs = []
-    for doc in nlp.pipe(records, batch_size=10000, n_threads=n_threads):
+    for doc in nlp.pipe(records, batch_size=10000):
         docs.append(doc)
 
     # Prepare matcher to select only some tokens
     matcher = Matcher(nlp.vocab)
     for tag in accepted_pos:
-        matcher.add(tag, None, [{'TAG': tag, 'IS_ALPHA': True, 'IS_PUNCT': False, 'IS_SPACE': False, 'IS_STOP': False, 'LIKE_NUM': False, 'LIKE_URL': False, 'LIKE_EMAIL': False}])
+        matcher.add(tag, [[{'TAG': tag, 'IS_ALPHA': True, 'IS_PUNCT': False, 'IS_SPACE': False, 'IS_STOP': False, 'LIKE_NUM': False, 'LIKE_URL': False, 'LIKE_EMAIL': False}]])
 
     total_token_occurrences_counter = Counter() # Total number of occurrences
     n_records_with_token = Counter() # Number of records that contain a token
@@ -54,7 +54,7 @@ def generate_wordcloud(records, n_most_common = 100, n_threads = 3, accepted_pos
 
 
 if __name__ == "__main__":
-    text1 = u"This is a sentence. And this is another sentence (although less important). I bought a car at http://www.car.com."
-    text2 = u"Testing is good! href='#three' 2.3e2 + 4 = $\\alpha$"
+    text1 = "This is a sentence. And this is another sentence (although less important). I bought a car at http://www.car.com."
+    text2 = "Testing is good! href='#three' 2.3e2 + 4 = $\\alpha$"
     records = [text1, text2]
-    word_cloud_json = generate_wordcloud(records, n_most_common = 100, n_threads = 3, accepted_pos = (u'NN', u'NNP', u'NNS', u'NNPS',))
+    word_cloud_json = generate_wordcloud(records, n_most_common = 100, accepted_pos = ('NN', 'NNP', 'NNS', 'NNPS',))
