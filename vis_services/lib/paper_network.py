@@ -269,8 +269,8 @@ def get_papernetwork(solr_data, max_groups, weighted=True, equalization=False, d
             scale = sqrt(len(reference_dictionary[papers[i]])*len(reference_dictionary[papers[j]]))
             force = 100*C[ref_papers.get(papers[i]),ref_papers.get(papers[j])] / scale
             if force > 0:
-                link_dict["%s\t%s"%(papers[i],papers[j])] = int(round(force))
-                link_dict["%s\t%s"%(papers[j],papers[i])] = int(round(force))
+                link_dict["%s\t%s"%(papers[i],papers[j])] = math.floor(force+.5)
+                link_dict["%s\t%s"%(papers[j],papers[i])] = math.floor(force+.5)
     # Cut the list of links to the maximum allowed by first sorting by force strength and then cutting by maximum allowed
     if do_cutoff:
         link_dict = _sort_and_cut_results(link_dict)
