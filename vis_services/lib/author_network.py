@@ -225,7 +225,7 @@ def get_network_with_groups(authors_lists, data):
     to_use_links = {}
     for couple in chosen_links:
         #I round the weight to the integer after multiplying it to 100
-        value_link = int(round(chosen_links[couple] * 100))
+        value_link = math.floor(chosen_links[couple] * 100+.5)
         to_use_links[couple] = value_link
 
     #I group the links with the same weight
@@ -302,7 +302,7 @@ def get_network_with_groups(authors_lists, data):
     to_use_nodes = _remap_dict_in_range(to_use_nodes, [5, 150])
 
     #I extract the list of names in a list, because I need the positions
-    listnames = list(to_use_nodes.keys())
+    listnames = sorted(to_use_nodes.keys())
     #then I build the final variables
     nodes = []
     for name in listnames:
